@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Letterist Help</title>
+<style>
+:root{--bg:#0f1623;--panel:#1a2539;--line:#385076;--text:#eef3ff;--muted:#c7d2e7;--accent:#85b8ff;--ok:#89deb5;--warn:#f4d35e;--item-bg:#1e3050}
+*{box-sizing:border-box}
+body{margin:0;padding:22px 22px 40px;background:radial-gradient(1000px 430px at 100% -120px,#2b457466 0%,#0f162300 60%),var(--bg);color:var(--text);font:14px/1.6 "Segoe UI",Arial,sans-serif}
+main{max-width:920px;margin:0 auto}
+h1{margin:0 0 4px;font-size:2rem}
+h2{margin:0 0 6px;font-size:1.3rem;font-weight:600;color:#b8d4ff}
+h3{margin:12px 0 4px;font-size:1rem;font-weight:600;color:var(--accent)}
+p,li,td{color:var(--muted);line-height:1.6}
+.subtitle{color:#9ab3d8;font-size:1rem;margin:0 0 14px}
+.panel{margin-top:16px;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.toc{columns:2;column-gap:20px;margin:8px 0 0}
+.toc a{display:block;padding:3px 0;color:var(--accent);text-decoration:none;break-inside:avoid}
+.toc a:hover{text-decoration:underline}
+.section{margin-top:20px;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.section h2{border-bottom:1px solid #2a4060;padding-bottom:6px;margin-bottom:4px}
+.section .intro{margin:4px 0 8px;font-size:0.95rem}
+.item{margin:8px 0;padding:10px 12px;border-radius:8px;background:var(--item-bg);border-left:3px solid #3a5a8a}
+.item h3{margin:0 0 4px}
+.item p{margin:2px 0 0;font-size:0.93rem}
+kbd{display:inline-block;background:#263a58;border:1px solid #4a6a9a;border-radius:4px;padding:1px 6px;font-family:Consolas,"Courier New",monospace;font-size:0.88em;color:#d8e6ff}
+.shortcut-table{width:100%;border-collapse:collapse;margin-top:6px}
+.shortcut-table td{padding:4px 10px;border-bottom:1px solid #2a4060}
+.shortcut-table td:first-child{white-space:nowrap;width:180px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.foot{margin-top:20px;padding-top:12px;border-top:1px solid var(--line);color:#8ea8cc;font-size:0.9rem}
+.next-link{display:inline-block;margin-top:8px;padding:8px 16px;background:#30466f;border:1px solid #4f73ac;border-radius:8px;color:#eef3ff;font-weight:500}
+.next-link:hover{filter:brightness(1.1);text-decoration:none}
+@media(max-width:700px){body{padding:14px 14px 30px}.toc{columns:1}}
+</style>
+</head>
+<body>
+<main>
+<h1 id="title"></h1>
+<p class="subtitle" id="subtitle"></p>
+<div class="panel"><h2 id="tocTitle"></h2><div class="toc" id="toc"></div></div>
+<div id="sections"></div>
+<div class="panel">
+<p id="quickText" style="margin:0 0 8px"></p>
+<a class="next-link" id="quickLink" href="../quickstart/index.html"></a>
+</div>
+<p class="foot" id="foot"></p>
+</main>
+<script>
+function renderHelp(){
+function norm(v){if(!v)return"en";var l=v.toLowerCase();if(l.startsWith("zh"))return"zh-cn";if(l.startsWith("pt"))return"pt-br";if(/^(es|fr|de|ja|ko)/.test(l))return l.split("-")[0];return"en";}
+var L=LANG_DATA;
+var lang=norm(new URLSearchParams(location.search).get("lang"));
+var t=L[lang]||L.en;
+document.documentElement.lang=lang;
+document.title=t.title;
+function s(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function h(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
+s("title",t.title);
+s("subtitle",t.subtitle);
+s("tocTitle",t.tocTitle);
+s("quickText",t.quickText);
+s("quickLink",t.quickLink);
+s("foot",t.foot);
+document.getElementById("quickLink").href="../quickstart/index.html?lang="+encodeURIComponent(lang);
+function hasRemovedShortcutReference(text){
+return /ctrl\+k/i.test(text||"");
+}
+var sections=(t.sections||[])
+    .filter(function(sec){return sec&&sec.id!=="shortcuts";})
+    .map(function(sec){
+        var items=(sec.items||[])
+            .map(function(it){
+                if(it.type==="table"){
+                    var rows=(it.rows||[]).filter(function(r){
+                        var combined=((r&&r[0])||"")+" "+((r&&r[1])||"");
+                        return !hasRemovedShortcutReference(combined);
+                    });
+                    return Object.assign({},it,{rows:rows});
+                }
+                return it;
+            })
+            .filter(function(it){
+                if(it.type==="table"){
+                    return (it.rows||[]).length>0;
+                }
+                var combined=((it&&it.h)||"")+" "+((it&&it.c)||"");
+                return !hasRemovedShortcutReference(combined);
+            });
+        return Object.assign({},sec,{items:items});
+    })
+    .filter(function(sec){return (sec.items||[]).length>0;});
+var tocH="",secH="";
+sections.forEach(function(sec){
+tocH+='<a href="#sec-'+sec.id+'">'+sec.title+'</a>';
+secH+='<div class="section" id="sec-'+sec.id+'"><h2>'+sec.title+'</h2>';
+if(sec.intro)secH+='<p class="intro">'+sec.intro+'</p>';
+sec.items.forEach(function(it){
+if(it.type==="table"){
+secH+='<table class="shortcut-table">';
+it.rows.forEach(function(r){secH+='<tr><td><kbd>'+r[0]+'</kbd></td><td style="color:#c7d2e7">'+r[1]+'</td></tr>';});
+secH+='</table>';
+}else{
+secH+='<div class="item">';
+if(it.h)secH+='<h3>'+it.h+'</h3>';
+secH+='<p>'+it.c+'</p></div>';
+}
+});
+secH+='</div>';
+});
+h("toc",tocH);
+h("sections",secH);
+}
+
+var LANG_DATA={
+"en":{
+title:"Letterist Help Guide",
+subtitle:"Complete reference for every feature in Letterist",
+tocTitle:"Table of Contents",
+quickText:"Looking for a quick walkthrough instead? Try the Quickstart guide.",
+quickLink:"Open Quickstart Guide",
+foot:"Use the search bar at the top of the help window to find specific topics.",
+sections:[
+{id:"workspace",title:"The Workspace",intro:"Letterist's workspace is organized around a central canvas with tool panels on each side.",items:[
+{h:"Canvas",c:"The large central area where you view and edit your pages. <b>Pan</b> by holding Space and dragging, or use the middle mouse button. <b>Zoom</b> with Ctrl+scroll wheel, <kbd>Ctrl+Plus</kbd>/<kbd>Ctrl+Minus</kbd>, or the toolbar zoom buttons. Press <kbd>Ctrl+0</kbd> to zoom to fit."},
+{h:"Left Sidebar",c:"Contains four tabs: <b>Pages</b> (navigate and manage pages), <b>Layers</b> (manage layer stacking order), <b>Panels</b> (panel layout management), and <b>Guides</b> (alignment guides, grid, and snapping settings). Click a tab header to switch."},
+{h:"Right Sidebar",c:"The property inspector. Shows editable properties for the selected balloon, image, or panel. Has tabs for <b>Balloon</b> (shape, position, fill), <b>Text</b> (font, size, color), <b>Tail</b> (style, width, curvature), and <b>Effects</b> (shadows, glow, extrusion)."},
+{h:"Toolbar",c:"The horizontal bar at the top provides quick access to tools (Select, Balloon, Tail), file operations (Save, Export), history (Undo, Redo), clipboard actions, zoom controls, and guide snapping."},
+{h:"Status Bar",c:"The bar at the bottom shows status messages, the current zoom level, and active translation language."},
+{h:"Fullscreen Canvas",c:"Press <kbd>Tab</kbd> to hide the sidebars and work with a larger canvas area. Press <kbd>Tab</kbd> again to restore the panels."},
+]},
+{id:"documents",title:"Documents & Pages",intro:"Manage your lettering projects and organize multi-page comics.",items:[
+{h:"Creating a Document",c:"<b>File \u2192 New Document</b> (<kbd>Ctrl+N</kbd>) creates a blank document. Choose a page size preset (US Comic, Manga B5, A4, Letter, Full HD, and more) or enter custom dimensions in <b>File \u2192 Document Settings</b>."},
+{h:"Opening & Saving",c:"Open existing projects with <b>File \u2192 Open</b> (<kbd>Ctrl+O</kbd>). Access recent files from <b>File \u2192 Open Recent</b>. Save with <kbd>Ctrl+S</kbd> or Save As with <kbd>Ctrl+Shift+S</kbd>. Letterist auto-saves periodically."},
+{h:"Managing Pages",c:"Add pages with <kbd>Ctrl+Alt+N</kbd>. In the <b>Pages</b> tab (left sidebar), click a page to navigate to it. Use the buttons at the bottom to add, delete, duplicate, or reorder pages. Each page can have its own size and background."},
+{h:"Document Settings",c:"<b>File \u2192 Document Settings</b> lets you configure the document name, default page size, DPI (dots per inch), measurement units (pixels, inches, cm, mm, points, picas), and default reading direction."}
+]},
+{id:"panels",title:"Panel Layout",intro:"Panels define the visual structure of your comic page \u2014 the borders and frames that organize your artwork.",items:[
+{h:"Entering Panel Mode",c:"Press <kbd>P</kbd> to enter Panel Layout mode. A floating toolbar appears with panel drawing tools. Press <kbd>P</kbd> again to return to normal balloon editing."},
+{h:"Drawing Panels",c:"Select a shape tool \u2014 <b>Rectangle</b>, <b>Rounded Rectangle</b>, <b>Ellipse</b>, <b>Polygon</b>, or <b>Freeform</b> \u2014 and draw on the canvas. For polygon, click to add vertices and double-click to close the shape."},
+{h:"Panel Properties",c:"Select a panel to edit its properties: position and size, corner radius, border color, border width, and border style (solid, dashed, dotted, dash-dot, or none). Set a safe margin to show warnings when balloons extend beyond safe areas."},
+{h:"Templates & Reading Order",c:"Save panel layouts as templates via <b>Page \u2192 Panel Templates</b> for quick reuse across pages. Set reading direction (left-to-right or right-to-left) in the <b>Guides</b> tab to define the order readers follow your panels."},
+{h:"Gutters",c:"Adjust the gutter spacing (gap between panels) in the <b>Guides</b> tab. This controls the visual spacing between your panel frames."}
+]},
+{id:"balloons",title:"Balloons",intro:"Balloons are the core element of comic lettering \u2014 the shapes that contain your dialogue and narration.",items:[
+{h:"Creating Balloons",c:"Press <kbd>B</kbd> or click the Balloon tool in the toolbar, then click on the canvas to place a balloon. Double-click the balloon to begin typing. Press <kbd>S</kbd> to create an SFX (sound effect) balloon with no visible border."},
+{h:"Selecting & Moving",c:"Press <kbd>V</kbd> for the Select tool. Click a balloon to select it. Drag to reposition. <b>Shift+click</b> to add to the selection. Use <b>arrow keys</b> to nudge by 1 pixel (<b>Shift+arrows</b> for 10 pixels)."},
+{h:"Resizing & Rotating",c:"Drag corner or edge handles to resize a selected balloon. Use <b>Ctrl+Arrow</b> keys to resize by 1px (<b>Ctrl+Shift+Arrow</b> for 10px). Set an exact rotation angle in the <b>Balloon</b> tab (right sidebar)."},
+{h:"Balloon Shapes",c:"In the <b>Balloon</b> tab, choose a shape: <b>Oval</b> (standard speech), <b>Rounded Rectangle</b>, <b>Rectangle</b> (narration/caption), <b>Radio</b> (electronic voice), <b>Thought Bubble</b>, <b>Splat</b>, <b>Burst</b> (shouting), <b>Whisper</b>, <b>Custom</b> (import SVG), or <b>None</b> (text only)."},
+{h:"Fill & Stroke",c:"Set the balloon's fill color from presets (white, black, yellow, red, blue, and more) or choose a custom color. Set stroke (border) color and width independently."},
+{h:"Linking Balloons",c:"When dialogue flows between balloons (same speaker), select them and use <b>Objects \u2192 Link Balloons</b> (<kbd>Ctrl+L</kbd>) to create a visual connection. Unlink with <kbd>Ctrl+Shift+L</kbd>."},
+{h:"Grouping & Alignment",c:"Group multiple objects with <kbd>Ctrl+G</kbd> to move them together. Align selected balloons with <b>Edit \u2192 Align</b> (left, center, right, top, middle, bottom) or distribute them evenly with <b>Edit \u2192 Distribute</b>."},
+{h:"Visibility & Locking",c:"Toggle a balloon's visibility in the <b>Balloon</b> tab to hide it without deleting. Lock a balloon to prevent accidental edits. Both can be toggled at the layer level too."}
+]},
+{id:"text",title:"Text & Styling",intro:"Format your dialogue and narration with professional typography controls.",items:[
+{h:"Editing Text",c:"Double-click a balloon to enter text editing mode. Type or paste your dialogue. Use standard text navigation (Home, End, arrow keys, Shift+arrows for selection). Press <kbd>Escape</kbd> to finish editing and return to selection mode."},
+{h:"Font Selection",c:"In the <b>Text</b> tab (right sidebar), click the font name to open the <b>Font Chooser</b> dialog. Browse or search all installed system fonts with a live preview. Click a font to select it."},
+{h:"Size, Color & Alignment",c:"Adjust font size, text color (from presets or custom picker), and alignment (left, center, right, justify) in the <b>Text</b> tab."},
+{h:"Character Formatting",c:"Select text, then apply formatting: <kbd>Ctrl+B</kbd> bold, <kbd>Ctrl+I</kbd> italic, <kbd>Ctrl+U</kbd> underline. Additional options include strikethrough, outline, subscript, and superscript from the properties panel."},
+{h:"Spacing & All Caps",c:"Fine-tune letter spacing (tracking) and line height for precise typographic control. Enable all-caps mode to automatically capitalize all text in a balloon."},
+{h:"Text Effects",c:"In the <b>Effects</b> tab, add <b>drop shadows</b> (adjustable offset, blur, and opacity), <b>glow</b> effects, <b>3D extrusion</b> (depth effect), and <b>motion blur</b> for dynamic text."},
+{h:"Copy & Paste Style",c:"Copy a balloon's complete styling with <kbd>Ctrl+Alt+C</kbd> and apply it to another balloon with <kbd>Ctrl+Alt+V</kbd>. This copies font, colors, shape, and effects all at once."}
+]},
+{id:"tails",title:"Tails",intro:"Tails point from a balloon toward the speaking character, showing who is talking.",items:[
+{h:"Adding a Tail",c:"Select a balloon and press <kbd>T</kbd> or click <b>Toggle Tail</b> in the toolbar. A tail appears attached to the balloon's edge. Drag the tail tip to point toward the speaker."},
+{h:"Tail Styles",c:"Choose from five styles in the <b>Tail</b> tab: <b>Pointer</b> (standard triangle), <b>Curved</b> (flowing curve), <b>Thought Bubbles</b> (chain of small circles), <b>Squiggly</b> (wavy line), or <b>None</b> (hidden tail)."},
+{h:"Width & Curvature",c:"Adjust the <b>width</b> slider to make the tail wider or narrower at its base. Adjust <b>curvature</b> to control how much the tail bends. The curve center slider adjusts where along the tail the bend occurs."},
+{h:"Multiple Tails",c:"A single balloon can have multiple tails \u2014 useful when multiple characters speak the same line, or for a character speaking from different positions."},
+{h:"Removing a Tail",c:"Select the balloon and press <kbd>T</kbd> again to remove its tail."}
+]},
+{id:"layers",title:"Layers",intro:"Layers control the stacking order of elements on each page.",items:[
+{h:"Layer Panel",c:"Use the <b>Layers</b> tab in the left sidebar to see all layers on the current page. Layers higher in the list appear in front of layers below."},
+{h:"Adding Layers",c:"Create a new layer with <b>Page \u2192 New Layer</b> (<kbd>Ctrl+Shift+N</kbd>). Layers can hold balloons or images."},
+{h:"Visibility & Locking",c:"Toggle a layer's visibility to temporarily hide all its contents. Lock a layer to prevent any edits to its contents. Locked balloon contents still appear on export."},
+{h:"Reordering",c:"Use <b>Page \u2192 Move Layer Up/Down</b> to change the stacking order. This controls which balloons appear in front of others."},
+{h:"Opacity",c:"Adjust layer opacity (0\u2013100%) for transparency effects. Useful for watermark or overlay layers."}
+]},
+{id:"images",title:"Images",intro:"Add artwork, backgrounds, and decorative images to your pages.",items:[
+{h:"Background Image",c:"Set a page's background artwork with <b>Objects \u2192 Open Image</b> (<kbd>Ctrl+Shift+O</kbd>). This is typically your comic artwork that you're lettering over. Remove it with <b>Objects \u2192 Clear Background Image</b>."},
+{h:"Floating Images",c:"Add decorative or overlay images with <b>Objects \u2192 Import Decoration</b> (<kbd>I</kbd>). Floating images can be moved, resized, rotated, and layered independently."},
+{h:"Other Import Methods",c:"<b>From URL:</b> Objects \u2192 Add Image from URL. <b>From clipboard:</b> Objects \u2192 Paste Image (<kbd>Ctrl+Shift+V</kbd>). <b>Batch:</b> Objects \u2192 Batch Import Images to import many files at once. <b>Drag & drop:</b> drag images from your file manager onto the canvas."}
+]},
+{id:"styles",title:"Styles & Templates",intro:"Save and reuse your balloon configurations for consistent lettering across a project.",items:[
+{h:"Balloon & Text Styles",c:"Save a balloon's appearance (shape, fill, stroke, text formatting) as a <b>named style</b>. Apply saved styles to other balloons instantly. This ensures visual consistency throughout a chapter or series."},
+{h:"Style Library",c:"Import and export style libraries via <b>File \u2192 Style Library</b>. Share styles between projects or with collaborators."},
+{h:"Balloon Templates",c:"Templates save a complete balloon configuration (shape, styling, tail settings) as a reusable preset. Create templates from the template library, and apply them to quickly create pre-styled balloons."},
+{h:"Template Hotkeys",c:"Assign your most-used templates to hotkeys <kbd>Alt+1</kbd> through <kbd>Alt+9</kbd>. Then press the hotkey and click the canvas to instantly place a pre-configured balloon."},
+{h:"Panel Templates",c:"Save panel layouts as templates via <b>Page \u2192 Panel Templates</b>. Apply a template to quickly set up a page with a predefined panel arrangement."}
+]},
+{id:"findreplace",title:"Find & Replace",intro:"Search for text across all balloons and optionally replace it.",items:[
+{h:"Finding Text",c:"Press <kbd>Ctrl+F</kbd> to open Find. Type your search text and press Enter. The app navigates to the first match and highlights it. Click Find Next to move through matches."},
+{h:"Replacing Text",c:"Press <kbd>Ctrl+H</kbd> to open Find & Replace. Enter search and replacement text. Click <b>Replace</b> to replace the current match, or <b>Replace All</b> to replace every occurrence at once."},
+{h:"Search Options",c:"Toggle <b>Match case</b> for case-sensitive search. Choose a search scope: <b>All pages</b>, <b>Current page</b>, or <b>Selection only</b>. Enable <b>Preserve case</b> when replacing to maintain the original capitalization pattern."}
+]},
+{id:"translation",title:"Translation",intro:"Letterist supports multi-language lettering workflows, letting you maintain translations for each balloon.",items:[
+{h:"Opening the Translation Panel",c:"Go to <b>File \u2192 Translate</b> (<kbd>Ctrl+Shift+T</kbd>) to open the Translation panel. Add target languages and set your base (source) language."},
+{h:"Translating Balloons",c:"Select a balloon and enter its translated text for the active language. The Translation panel shows completion statistics \u2014 how many balloons have been translated vs. how many remain."},
+{h:"Switching Languages",c:"Change the active language in the Translation panel to view and edit that language's text on the canvas. This lets you preview how translations look in context."},
+{h:"Exporting Translations",c:"In the Export dialog, enable per-language export to generate separate output files for each language. You can organize outputs into per-language folders or include language codes in filenames."}
+]},
+{id:"guides",title:"Guides & Alignment",intro:"Use guides, grids, and alignment tools to position elements precisely.",items:[
+{h:"Adding Guides",c:"Add horizontal guides with <kbd>Ctrl+Alt+H</kbd> and vertical guides with <kbd>Ctrl+Alt+V</kbd>. Drag a guide to reposition it. Delete individual guides or clear all from the <b>Guides</b> tab."},
+{h:"Snapping",c:"Enable <b>Snap to Guides</b> in the Guides tab or toolbar so objects snap to nearby guides when moved. Enable <b>Snap to Grid</b> (<kbd>Ctrl+Shift+G</kbd>) for pixel-precise grid alignment."},
+{h:"Grid",c:"Toggle grid visibility with <kbd>Ctrl+G</kbd>. Customize grid spacing (minor and major intervals) and grid color in <b>Preferences \u2192 Canvas</b>."},
+{h:"Align & Distribute",c:"Select multiple balloons, then use <b>Edit \u2192 Align</b> (Left, Center, Right, Top, Middle, Bottom) to align edges or centers. Use <b>Edit \u2192 Distribute</b> (Horizontally, Vertically) to space them evenly."},
+{h:"Locking Guides",c:"Lock your guides to prevent accidentally moving them while editing. Toggle guide locking in the <b>Guides</b> tab."}
+]},
+{id:"export",title:"Export",intro:"Export your lettered pages in a variety of formats for print, web, or digital distribution.",items:[
+{h:"Opening the Export Dialog",c:"Go to <b>File \u2192 Export</b> (<kbd>Ctrl+Shift+E</kbd>)."},
+{h:"Scope & Batch",c:"Export the current page or all pages at once. Filter by <b>visible layers only</b> or <b>selection only</b>. For multi-page formats (PDF, CBZ, CBR, EPUB), all pages are included automatically."},
+{h:"Translation Export",c:"Export all languages or a selected subset. Enable <b>per-language folders</b> to organize output, or <b>include language code in filename</b> for flat exports."},
+{h:"Filename Pattern",c:"Customize output filenames using patterns like <code>{document}-page-{page}</code>. Set page number start and padding (e.g., 001, 002, 003)."}
+]},
+
+{id:"preferences",title:"Preferences",intro:"Customize Letterist to match your workflow.",items:[
+{h:"Opening Preferences",c:"Go to <b>File \u2192 Preferences</b> (<kbd>Ctrl+,</kbd>). Use the search bar at the top to quickly find specific settings."},
+{h:"General",c:"Set the UI language, default page dimensions and DPI, autosave interval, and how many recent files to remember."},
+{h:"Units",c:"Choose your preferred measurement system: pixels, inches, centimeters, millimeters, points, or picas. Toggle ruler display."},
+{h:"Canvas",c:"Customize workspace background color, grid colors and spacing (minor and major), handle size, zoom step percentage, and scroll speed."},
+{h:"Export Defaults",c:"Set default export format, DPI, quality, output folder, and filename pattern so you don't have to reconfigure each time."},
+{h:"Performance",c:"Adjust undo history limit, thumbnail cache size, hardware acceleration, background rendering, and memory limits."},
+{h:"Keyboard Shortcuts",c:"Remap any keyboard shortcut to your preferred key combination. Changes take effect immediately."},
+{h:"Import & Export Settings",c:"Save your complete preferences to a file for backup or to transfer to another machine. Use <b>Reset to Defaults</b> to restore all settings."}
+]}
+]
+},
+"es":{
+title:"Gu\u00eda de ayuda de Letterist",
+subtitle:"Referencia completa de todas las funciones de Letterist",
+tocTitle:"\u00cdndice",
+quickText:"\u00bfPrefieres una gu\u00eda r\u00e1pida? Prueba el inicio r\u00e1pido.",
+quickLink:"Abrir inicio r\u00e1pido",
+foot:"Usa la barra de b\u00fasqueda en la parte superior de la ventana de ayuda para encontrar temas espec\u00edficos.",
+sections:[
+{id:"workspace",title:"El espacio de trabajo",intro:"El espacio de trabajo de Letterist se organiza alrededor de un lienzo central con paneles de herramientas a cada lado.",items:[
+{h:"Lienzo",c:"\u00c1rea central para ver y editar p\u00e1ginas. <b>Desplazar</b>: mant\u00e9n Espacio y arrastra, o usa el bot\u00f3n central del rat\u00f3n. <b>Zoom</b>: Ctrl+rueda, <kbd>Ctrl+M\u00e1s</kbd>/<kbd>Ctrl+Menos</kbd>, o los botones de la barra. <kbd>Ctrl+0</kbd> para ajustar al lienzo."},
+{h:"Barra lateral izquierda",c:"Cuatro pesta\u00f1as: <b>P\u00e1ginas</b> (navegar y gestionar), <b>Capas</b> (orden de apilamiento), <b>Paneles</b> (dise\u00f1o de paneles) y <b>Gu\u00edas</b> (gu\u00edas de alineaci\u00f3n, cuadr\u00edcula, ajuste)."},
+{h:"Barra lateral derecha",c:"Inspector de propiedades. Muestra las propiedades editables del objeto seleccionado con pesta\u00f1as: <b>Globo</b>, <b>Texto</b>, <b>Cola</b> y <b>Efectos</b>."},
+{h:"Barra de herramientas",c:"Acceso r\u00e1pido a herramientas (Selecci\u00f3n, Globo, Cola), archivo (Guardar, Exportar), historial (Deshacer, Rehacer), portapapeles, zoom y ajuste a gu\u00edas."},
+{h:"Barra de estado",c:"Muestra mensajes de estado, nivel de zoom actual e idioma de traducci\u00f3n activo."},
+{h:"Lienzo completo",c:"Pulsa <kbd>Tab</kbd> para ocultar las barras laterales y trabajar con m\u00e1s espacio. Pulsa <kbd>Tab</kbd> de nuevo para restaurarlas."},
+]},
+{id:"documents",title:"Documentos y p\u00e1ginas",intro:"Gestiona tus proyectos de rotulaci\u00f3n y organiza c\u00f3mics de varias p\u00e1ginas.",items:[
+{h:"Crear un documento",c:"<b>Archivo \u2192 Nuevo documento</b> (<kbd>Ctrl+N</kbd>). Elige un tama\u00f1o predefinido (US Comic, Manga B5, A4, etc.) o introduce dimensiones personalizadas en <b>Configuraci\u00f3n del documento</b>."},
+{h:"Abrir y guardar",c:"Abre proyectos con <b>Archivo \u2192 Abrir</b> (<kbd>Ctrl+O</kbd>). Archivos recientes en <b>Archivo \u2192 Abrir reciente</b>. Guarda con <kbd>Ctrl+S</kbd> o Guardar como con <kbd>Ctrl+Shift+S</kbd>. Letterist guarda autom\u00e1ticamente."},
+{h:"Gestionar p\u00e1ginas",c:"A\u00f1ade p\u00e1ginas con <kbd>Ctrl+Alt+N</kbd>. En la pesta\u00f1a <b>P\u00e1ginas</b> puedes navegar, eliminar, duplicar o reordenar. Cada p\u00e1gina puede tener su propio tama\u00f1o y fondo."},
+{h:"Configuraci\u00f3n del documento",c:"<b>Archivo \u2192 Configuraci\u00f3n del documento</b>: nombre, tama\u00f1o de p\u00e1gina, DPI, unidades de medida y direcci\u00f3n de lectura predeterminada."}
+]},
+{id:"panels",title:"Dise\u00f1o de paneles",intro:"Los paneles definen la estructura visual de tu p\u00e1gina de c\u00f3mic: los bordes y marcos que organizan tu ilustraci\u00f3n.",items:[
+{h:"Entrar en modo paneles",c:"Pulsa <kbd>P</kbd> para activar el modo de dise\u00f1o de paneles. Aparece una barra flotante con herramientas de dibujo. Pulsa <kbd>P</kbd> de nuevo para volver."},
+{h:"Dibujar paneles",c:"Selecciona una forma: <b>Rect\u00e1ngulo</b>, <b>Rect\u00e1ngulo redondeado</b>, <b>Elipse</b>, <b>Pol\u00edgono</b> o <b>Forma libre</b>. Dibuja en el lienzo. Para pol\u00edgonos, haz clic para v\u00e9rtices y doble clic para cerrar."},
+{h:"Propiedades del panel",c:"Selecciona un panel para editar posici\u00f3n, tama\u00f1o, radio de esquina, color y ancho del borde, estilo (s\u00f3lido, discontinuo, punteado, ninguno) y margen seguro."},
+{h:"Plantillas y orden de lectura",c:"Guarda dise\u00f1os como plantillas en <b>P\u00e1gina \u2192 Plantillas de panel</b>. Define la direcci\u00f3n de lectura (izquierda a derecha o derecha a izquierda) en la pesta\u00f1a <b>Gu\u00edas</b>."},
+{h:"Canalones",c:"Ajusta el espacio entre paneles (canalones) en la pesta\u00f1a <b>Gu\u00edas</b>."}
+]},
+{id:"balloons",title:"Globos",intro:"Los globos son el elemento principal del rotulado: las formas que contienen tu di\u00e1logo y narraci\u00f3n.",items:[
+{h:"Crear globos",c:"Pulsa <kbd>B</kbd> o haz clic en la herramienta Globo, luego haz clic en el lienzo. Haz doble clic para escribir. Pulsa <kbd>S</kbd> para crear un globo SFX (efectos de sonido) sin borde."},
+{h:"Seleccionar y mover",c:"Pulsa <kbd>V</kbd> para seleccionar. Arrastra para mover. <b>Shift+clic</b> para selecci\u00f3n m\u00faltiple. <b>Flechas</b> para mover 1px (<b>Shift+Flechas</b> para 10px)."},
+{h:"Redimensionar y rotar",c:"Arrastra las esquinas para redimensionar. <b>Ctrl+Flechas</b> para 1px, <b>Ctrl+Shift+Flechas</b> para 10px. Rota con el control deslizante en la pesta\u00f1a <b>Globo</b>."},
+{h:"Formas de globo",c:"<b>Oval</b>, <b>Rect\u00e1ngulo redondeado</b>, <b>Rect\u00e1ngulo</b>, <b>Radio</b>, <b>Burbuja de pensamiento</b>, <b>Salpicadura</b>, <b>Explosi\u00f3n</b>, <b>Susurro</b>, <b>Personalizado</b> (SVG) o <b>Ninguno</b> (solo texto)."},
+{h:"Relleno y contorno",c:"Define el color de relleno y el color, ancho y estilo del contorno (borde) en la pesta\u00f1a <b>Globo</b>."},
+{h:"Vincular globos",c:"Selecciona varios globos y usa <b>Objetos \u2192 Vincular globos</b> (<kbd>Ctrl+L</kbd>) para crear una conexi\u00f3n visual. Desvincular con <kbd>Ctrl+Shift+L</kbd>."},
+{h:"Agrupar y alinear",c:"Agrupa con <kbd>Ctrl+G</kbd>. Alinea con <b>Editar \u2192 Alinear</b> y distribuye con <b>Editar \u2192 Distribuir</b>."},
+{h:"Visibilidad y bloqueo",c:"Alterna la visibilidad para ocultar sin eliminar. Bloquea para evitar cambios accidentales."}
+]},
+{id:"text",title:"Texto y estilo",intro:"Da formato a tu di\u00e1logo y narraci\u00f3n con controles tipogr\u00e1ficos profesionales.",items:[
+{h:"Editar texto",c:"Haz doble clic en un globo para entrar en modo de edici\u00f3n. Escribe tu di\u00e1logo. Pulsa <kbd>Escape</kbd> para finalizar."},
+{h:"Selecci\u00f3n de fuente",c:"Haz clic en el nombre de fuente en la pesta\u00f1a <b>Texto</b> para abrir el <b>Selector de fuentes</b>. Busca y previsualiza fuentes del sistema."},
+{h:"Tama\u00f1o, color y alineaci\u00f3n",c:"Ajusta tama\u00f1o, color del texto y alineaci\u00f3n (izquierda, centro, derecha, justificado) en la pesta\u00f1a <b>Texto</b>."},
+{h:"Formato de caracteres",c:"Selecciona texto y aplica: <kbd>Ctrl+B</kbd> negrita, <kbd>Ctrl+I</kbd> cursiva, <kbd>Ctrl+U</kbd> subrayado. Tambi\u00e9n: tachado, contorno, sub\u00edndice, super\u00edndice."},
+{h:"Espaciado y may\u00fasculas",c:"Ajusta el espaciado entre letras (tracking) y la altura de l\u00ednea. Activa may\u00fasculas autom\u00e1ticas para todo el texto del globo."},
+{h:"Efectos de texto",c:"En la pesta\u00f1a <b>Efectos</b>: <b>sombra paralela</b>, <b>brillo</b>, <b>extrusi\u00f3n 3D</b> y <b>desenfoque de movimiento</b>."},
+{h:"Copiar y pegar estilo",c:"Copia el estilo con <kbd>Ctrl+Alt+C</kbd> y p\u00e9galo en otro globo con <kbd>Ctrl+Alt+V</kbd>."}
+]},
+{id:"tails",title:"Colas",intro:"Las colas apuntan desde un globo hacia el personaje que habla.",items:[
+{h:"A\u00f1adir una cola",c:"Selecciona un globo y pulsa <kbd>T</kbd>. Arrastra la punta hacia el hablante."},
+{h:"Estilos de cola",c:"Cinco estilos: <b>Puntero</b>, <b>Curvada</b>, <b>Burbujas de pensamiento</b>, <b>Ondulada</b> o <b>Ninguna</b>."},
+{h:"Ancho y curvatura",c:"Ajusta el ancho y la curvatura con los controles deslizantes de la pesta\u00f1a <b>Cola</b>."},
+{h:"M\u00faltiples colas",c:"Un globo puede tener varias colas para indicar m\u00faltiples hablantes."},
+{h:"Eliminar una cola",c:"Selecciona el globo y pulsa <kbd>T</kbd> de nuevo."}
+]},
+{id:"layers",title:"Capas",intro:"Las capas controlan el orden de apilamiento de los elementos en cada p\u00e1gina.",items:[
+{h:"Panel de capas",c:"Usa la pesta\u00f1a <b>Capas</b> en la barra lateral izquierda. Las capas superiores aparecen delante."},
+{h:"A\u00f1adir capas",c:"Crea una nueva capa con <b>P\u00e1gina \u2192 Nueva capa</b> (<kbd>Ctrl+Shift+N</kbd>)."},
+{h:"Visibilidad y bloqueo",c:"Alterna la visibilidad para ocultar temporalmente. Bloquea para evitar ediciones."},
+{h:"Reordenar",c:"Usa <b>P\u00e1gina \u2192 Mover capa arriba/abajo</b> para cambiar el orden."},
+{h:"Opacidad",c:"Ajusta la opacidad (0\u2013100%) para efectos de transparencia."}
+]},
+{id:"images",title:"Im\u00e1genes",intro:"A\u00f1ade ilustraciones, fondos e im\u00e1genes decorativas a tus p\u00e1ginas.",items:[
+{h:"Imagen de fondo",c:"<b>Objetos \u2192 Abrir imagen</b> (<kbd>Ctrl+Shift+O</kbd>) para establecer la ilustraci\u00f3n de fondo. Elim\u00ednala con <b>Objetos \u2192 Limpiar imagen de fondo</b>."},
+{h:"Im\u00e1genes flotantes",c:"<b>Objetos \u2192 Importar decoraci\u00f3n</b> (<kbd>I</kbd>) para im\u00e1genes que puedes mover, redimensionar y rotar."},
+{h:"Otros m\u00e9todos",c:"<b>Desde URL</b>, <b>desde portapapeles</b> (<kbd>Ctrl+Shift+V</kbd>), <b>importaci\u00f3n masiva</b> o <b>arrastrar y soltar</b> desde el explorador de archivos."}
+]},
+{id:"styles",title:"Estilos y plantillas",intro:"Guarda y reutiliza tus configuraciones de globo para un rotulado consistente.",items:[
+{h:"Estilos de globo y texto",c:"Guarda la apariencia como un <b>estilo nombrado</b> y apl\u00edcalo a otros globos para mantener la consistencia."},
+{h:"Biblioteca de estilos",c:"Importa y exporta bibliotecas de estilos en <b>Archivo \u2192 Biblioteca de estilos</b>."},
+{h:"Plantillas de globo",c:"Guarda configuraciones completas como plantillas reutilizables. As\u00edgnalas a teclas r\u00e1pidas <kbd>Alt+1</kbd> a <kbd>Alt+9</kbd>."},
+{h:"Plantillas de panel",c:"Guarda dise\u00f1os de paneles como plantillas en <b>P\u00e1gina \u2192 Plantillas de panel</b>."}
+]},
+{id:"findreplace",title:"Buscar y reemplazar",intro:"Busca texto en todos los globos y reempl\u00e1zalo opcionalmente.",items:[
+{h:"Buscar",c:"<kbd>Ctrl+F</kbd> para abrir Buscar. Escribe el texto y pulsa Enter. La app navega al primer resultado."},
+{h:"Reemplazar",c:"<kbd>Ctrl+H</kbd> para Buscar y reemplazar. <b>Reemplazar</b> uno a uno o <b>Reemplazar todo</b>."},
+{h:"Opciones",c:"<b>Coincidir may\u00fasculas</b>, \u00e1mbito de b\u00fasqueda (todas las p\u00e1ginas, p\u00e1gina actual, selecci\u00f3n), <b>preservar may\u00fasculas</b> al reemplazar."}
+]},
+{id:"translation",title:"Traducci\u00f3n",intro:"Flujos de trabajo multiling\u00fces para mantener traducciones de cada globo.",items:[
+{h:"Panel de traducci\u00f3n",c:"<b>Archivo \u2192 Traducir</b> (<kbd>Ctrl+Shift+T</kbd>). A\u00f1ade idiomas destino y establece el idioma base."},
+{h:"Traducir globos",c:"Selecciona un globo e introduce la traducci\u00f3n para el idioma activo. El panel muestra estad\u00edsticas de progreso."},
+{h:"Cambiar idioma",c:"Cambia el idioma activo para ver y editar traducciones en el lienzo."},
+{h:"Exportar traducciones",c:"En el di\u00e1logo de exportaci\u00f3n, activa la exportaci\u00f3n por idioma con carpetas separadas o c\u00f3digos de idioma en los nombres de archivo."}
+]},
+{id:"guides",title:"Gu\u00edas y alineaci\u00f3n",intro:"Usa gu\u00edas, cuadr\u00edculas y herramientas de alineaci\u00f3n para posicionar elementos con precisi\u00f3n.",items:[
+{h:"A\u00f1adir gu\u00edas",c:"Gu\u00edas horizontales: <kbd>Ctrl+Alt+H</kbd>. Verticales: <kbd>Ctrl+Alt+V</kbd>. Arrastra para reposicionar."},
+{h:"Ajuste",c:"Activa <b>Ajustar a gu\u00edas</b> y <b>Ajustar a cuadr\u00edcula</b> (<kbd>Ctrl+Shift+G</kbd>) para alineaci\u00f3n precisa."},
+{h:"Cuadr\u00edcula",c:"Muestra/oculta con <kbd>Ctrl+G</kbd>. Personaliza el espaciado en <b>Preferencias \u2192 Lienzo</b>."},
+{h:"Alinear y distribuir",c:"<b>Editar \u2192 Alinear</b> y <b>Editar \u2192 Distribuir</b> para organizar m\u00faltiples globos."},
+{h:"Bloquear gu\u00edas",c:"Bloquea las gu\u00edas para evitar moverlas accidentalmente."}
+]},
+{id:"export",title:"Exportar",intro:"Exporta tus p\u00e1ginas rotuladas en diversos formatos para impresi\u00f3n, web o distribuci\u00f3n digital.",items:[
+{h:"Abrir exportaci\u00f3n",c:"<b>Archivo \u2192 Exportar</b> (<kbd>Ctrl+Shift+E</kbd>)."},
+{h:"DPI y calidad",c:"Define resoluci\u00f3n (DPI) y calidad (1\u2013100%) para formatos con p\u00e9rdida."},
+{h:"Opciones",c:"Fondo transparente, solo superposici\u00f3n, bordes de panel, metadatos."},
+{h:"Alcance y lote",c:"P\u00e1gina actual o todas. Filtrar por capas visibles o selecci\u00f3n."},
+{h:"Exportar traducciones",c:"Exporta por idioma con carpetas o c\u00f3digos en nombre de archivo."},
+{h:"Patr\u00f3n de nombre",c:"Personaliza nombres con patrones como <code>{document}-page-{page}</code>."}
+]},
+
+{id:"preferences",title:"Preferencias",intro:"Personaliza Letterist seg\u00fan tu flujo de trabajo.",items:[
+{h:"Abrir preferencias",c:"<b>Archivo \u2192 Preferencias</b> (<kbd>Ctrl+,</kbd>). Busca configuraciones espec\u00edficas con la barra de b\u00fasqueda."},
+{h:"General",c:"Idioma de la interfaz, dimensiones de p\u00e1gina predeterminadas, DPI, intervalo de autoguardado, archivos recientes."},
+{h:"Unidades",c:"Sistema de medida: p\u00edxeles, pulgadas, cent\u00edmetros, mil\u00edmetros, puntos o picas. Alternar reglas."},
+{h:"Lienzo",c:"Color de fondo, colores y espaciado de cuadr\u00edcula, tama\u00f1o de controles, velocidad de zoom y desplazamiento."},
+{h:"Exportar",c:"Formato, DPI, calidad, carpeta y patr\u00f3n de nombre predeterminados."},
+{h:"Rendimiento",c:"L\u00edmite de deshacer, cach\u00e9 de miniaturas, aceleraci\u00f3n por hardware, l\u00edmite de memoria."},
+{h:"Atajos de teclado",c:"Reasigna cualquier atajo a tu combinaci\u00f3n de teclas preferida."},
+{h:"Importar y exportar",c:"Guarda o restaura preferencias. Usa <b>Restablecer valores predeterminados</b> para volver a la configuraci\u00f3n original."}
+]}
+]
+},
+"fr":{
+title:"Guide d'aide Letterist",
+subtitle:"R\u00e9f\u00e9rence compl\u00e8te de toutes les fonctionnalit\u00e9s de Letterist",
+tocTitle:"Table des mati\u00e8res",
+quickText:"Vous pr\u00e9f\u00e9rez un guide rapide\u00a0? Essayez le d\u00e9marrage rapide.",
+quickLink:"Ouvrir le d\u00e9marrage rapide",
+foot:"Utilisez la barre de recherche en haut de la fen\u00eatre d'aide pour trouver des sujets.",
+sections:[
+{id:"workspace",title:"L'espace de travail",intro:"L'espace de travail Letterist est organis\u00e9 autour d'un canevas central avec des panneaux d'outils de chaque c\u00f4t\u00e9.",items:[
+{h:"Canevas",c:"Zone centrale d'\u00e9dition. <b>D\u00e9filement</b>\u00a0: Espace+glisser ou bouton central de la souris. <b>Zoom</b>\u00a0: Ctrl+molette, <kbd>Ctrl+Plus</kbd>/<kbd>Ctrl+Moins</kbd>. <kbd>Ctrl+0</kbd> pour ajuster au canevas."},
+{h:"Barre lat\u00e9rale gauche",c:"Quatre onglets\u00a0: <b>Pages</b>, <b>Calques</b>, <b>Cases</b> et <b>Guides</b> (guides d'alignement, grille, accrochage)."},
+{h:"Barre lat\u00e9rale droite",c:"Inspecteur de propri\u00e9t\u00e9s. Onglets\u00a0: <b>Bulle</b>, <b>Texte</b>, <b>Queue</b> et <b>Effets</b>."},
+{h:"Barre d'outils",c:"Acc\u00e8s rapide aux outils, fichiers, historique, presse-papiers, zoom et accrochage."},
+{h:"Barre d'\u00e9tat",c:"Messages d'\u00e9tat, niveau de zoom, langue de traduction active."},
+{h:"Canevas plein \u00e9cran",c:"<kbd>Tab</kbd> pour masquer les barres lat\u00e9rales. <kbd>Tab</kbd> \u00e0 nouveau pour les restaurer."},
+]},
+{id:"documents",title:"Documents et pages",intro:"G\u00e9rez vos projets de lettrage et organisez des bandes dessin\u00e9es multi-pages.",items:[
+{h:"Cr\u00e9er un document",c:"<b>Fichier \u2192 Nouveau</b> (<kbd>Ctrl+N</kbd>). Choisissez un format pr\u00e9d\u00e9fini ou des dimensions personnalis\u00e9es."},
+{h:"Ouvrir et enregistrer",c:"<b>Fichier \u2192 Ouvrir</b> (<kbd>Ctrl+O</kbd>). Enregistrer\u00a0: <kbd>Ctrl+S</kbd>. Enregistrer sous\u00a0: <kbd>Ctrl+Shift+S</kbd>. Sauvegarde automatique p\u00e9riodique."},
+{h:"G\u00e9rer les pages",c:"Ajouter\u00a0: <kbd>Ctrl+Alt+N</kbd>. Dans l'onglet <b>Pages</b>, naviguer, supprimer, dupliquer ou r\u00e9ordonner."},
+{h:"Param\u00e8tres du document",c:"<b>Fichier \u2192 Param\u00e8tres</b>\u00a0: nom, taille, DPI, unit\u00e9s, direction de lecture."}
+]},
+{id:"panels",title:"Mise en page des cases",intro:"Les cases d\u00e9finissent la structure visuelle de votre page\u00a0: les bordures qui organisent votre illustration.",items:[
+{h:"Mode cases",c:"<kbd>P</kbd> pour entrer dans le mode cases. <kbd>P</kbd> \u00e0 nouveau pour revenir \u00e0 l'\u00e9dition normale."},
+{h:"Dessiner des cases",c:"Outils\u00a0: <b>Rectangle</b>, <b>Rectangle arrondi</b>, <b>\u00c9llipse</b>, <b>Polygone</b>, <b>Forme libre</b>."},
+{h:"Propri\u00e9t\u00e9s",c:"Position, taille, rayon de coin, couleur/largeur/style de bordure, marge de s\u00e9curit\u00e9."},
+{h:"Mod\u00e8les et ordre de lecture",c:"Enregistrez des mises en page via <b>Page \u2192 Mod\u00e8les de case</b>. D\u00e9finissez la direction de lecture dans l'onglet <b>Guides</b>."},
+{h:"Goutti\u00e8res",c:"Ajustez l'espacement entre les cases dans l'onglet <b>Guides</b>."}
+]},
+{id:"balloons",title:"Bulles",intro:"Les bulles sont l'\u00e9l\u00e9ment central du lettrage\u00a0: les formes contenant vos dialogues.",items:[
+{h:"Cr\u00e9er des bulles",c:"<kbd>B</kbd> puis cliquez sur le canevas. Double-cliquez pour \u00e9crire. <kbd>S</kbd> pour un SFX sans bordure."},
+{h:"S\u00e9lectionner et d\u00e9placer",c:"<kbd>V</kbd> pour s\u00e9lectionner. Glissez pour d\u00e9placer. <b>Shift+clic</b> pour s\u00e9lection multiple. Fl\u00e8ches pour d\u00e9placer de 1px."},
+{h:"Redimensionner et pivoter",c:"Tirez les poign\u00e9es pour redimensionner. Rotation dans l'onglet <b>Bulle</b>."},
+{h:"Formes",c:"<b>Ovale</b>, <b>Rectangle arrondi</b>, <b>Rectangle</b>, <b>Radio</b>, <b>Pens\u00e9e</b>, <b>\u00c9claboussure</b>, <b>Explosion</b>, <b>Chuchotement</b>, <b>Personnalis\u00e9</b> (SVG), <b>Aucune</b>."},
+{h:"Remplissage et contour",c:"Couleur de remplissage et de contour dans l'onglet <b>Bulle</b>."},
+{h:"Lier des bulles",c:"<b>Objets \u2192 Lier</b> (<kbd>Ctrl+L</kbd>). D\u00e9lier\u00a0: <kbd>Ctrl+Shift+L</kbd>."},
+{h:"Grouper et aligner",c:"Grouper\u00a0: <kbd>Ctrl+G</kbd>. <b>\u00c9dition \u2192 Aligner</b> et <b>\u00c9dition \u2192 Distribuer</b>."},
+{h:"Visibilit\u00e9 et verrouillage",c:"Masquer sans supprimer. Verrouiller pour \u00e9viter les modifications accidentelles."}
+]},
+{id:"text",title:"Texte et style",intro:"Mettez en forme vos dialogues avec des contr\u00f4les typographiques professionnels.",items:[
+{h:"\u00c9diter le texte",c:"Double-cliquez sur une bulle pour \u00e9diter. <kbd>Escape</kbd> pour terminer."},
+{h:"Choix de police",c:"Cliquez sur le nom de police dans l'onglet <b>Texte</b> pour ouvrir le <b>S\u00e9lecteur de polices</b>."},
+{h:"Taille, couleur, alignement",c:"Ajustez dans l'onglet <b>Texte</b>\u00a0: taille, couleur, alignement (gauche, centre, droite, justifi\u00e9)."},
+{h:"Mise en forme",c:"<kbd>Ctrl+B</kbd> gras, <kbd>Ctrl+I</kbd> italique, <kbd>Ctrl+U</kbd> soulign\u00e9. Aussi\u00a0: barr\u00e9, contour, indice, exposant."},
+{h:"Espacement et majuscules",c:"Espacement des lettres (tracking) et hauteur de ligne. Mode tout en majuscules."},
+{h:"Effets de texte",c:"Onglet <b>Effets</b>\u00a0: ombre port\u00e9e, lueur, extrusion 3D, flou de mouvement."},
+{h:"Copier/coller le style",c:"<kbd>Ctrl+Alt+C</kbd> pour copier, <kbd>Ctrl+Alt+V</kbd> pour appliquer le style."}
+]},
+{id:"tails",title:"Queues",intro:"Les queues pointent depuis une bulle vers le personnage qui parle.",items:[
+{h:"Ajouter",c:"S\u00e9lectionnez une bulle et appuyez sur <kbd>T</kbd>. Glissez la pointe vers le locuteur."},
+{h:"Styles",c:"<b>Pointeur</b>, <b>Courb\u00e9e</b>, <b>Bulles de pens\u00e9e</b>, <b>Ondulante</b>, <b>Aucune</b>."},
+{h:"Largeur et courbure",c:"Ajustez avec les curseurs de l'onglet <b>Queue</b>."},
+{h:"Queues multiples",c:"Une bulle peut avoir plusieurs queues pour plusieurs locuteurs."},
+{h:"Supprimer",c:"<kbd>T</kbd> \u00e0 nouveau pour supprimer la queue."}
+]},
+{id:"layers",title:"Calques",intro:"Les calques contr\u00f4lent l'ordre d'empilement sur chaque page.",items:[
+{h:"Panneau des calques",c:"Onglet <b>Calques</b> dans la barre lat\u00e9rale gauche."},
+{h:"Ajouter",c:"<b>Page \u2192 Nouveau calque</b> (<kbd>Ctrl+Shift+N</kbd>)."},
+{h:"Visibilit\u00e9 et verrouillage",c:"Masquer temporairement ou verrouiller pour emp\u00eacher les modifications."},
+{h:"R\u00e9ordonner",c:"<b>Page \u2192 D\u00e9placer calque haut/bas</b>."},
+{h:"Opacit\u00e9",c:"Opacit\u00e9 0\u2013100% pour les effets de transparence."}
+]},
+{id:"images",title:"Images",intro:"Ajoutez illustrations, fonds et images d\u00e9coratives.",items:[
+{h:"Image de fond",c:"<b>Objets \u2192 Ouvrir image</b> (<kbd>Ctrl+Shift+O</kbd>). Supprimer\u00a0: <b>Objets \u2192 Effacer l'image de fond</b>."},
+{h:"Images flottantes",c:"<b>Objets \u2192 Importer d\u00e9coration</b> (<kbd>I</kbd>)."},
+{h:"Autres m\u00e9thodes",c:"Depuis URL, presse-papiers (<kbd>Ctrl+Shift+V</kbd>), import par lot, ou glisser-d\u00e9poser."}
+]},
+{id:"styles",title:"Styles et mod\u00e8les",intro:"Enregistrez et r\u00e9utilisez vos configurations pour un lettrage coh\u00e9rent.",items:[
+{h:"Styles nomm\u00e9s",c:"Enregistrez l'apparence comme <b>style nomm\u00e9</b> et appliquez-le \u00e0 d'autres bulles."},
+{h:"Biblioth\u00e8que",c:"Importez/exportez via <b>Fichier \u2192 Biblioth\u00e8que de styles</b>."},
+{h:"Mod\u00e8les de bulle",c:"Enregistrez des configurations compl\u00e8tes. Assignez aux raccourcis <kbd>Alt+1</kbd> \u00e0 <kbd>Alt+9</kbd>."},
+{h:"Mod\u00e8les de case",c:"<b>Page \u2192 Mod\u00e8les de case</b>."}
+]},
+{id:"findreplace",title:"Rechercher et remplacer",intro:"Cherchez du texte dans toutes les bulles.",items:[
+{h:"Rechercher",c:"<kbd>Ctrl+F</kbd>. Tapez et appuyez sur Entr\u00e9e."},
+{h:"Remplacer",c:"<kbd>Ctrl+H</kbd>. <b>Remplacer</b> ou <b>Tout remplacer</b>."},
+{h:"Options",c:"Respecter la casse, port\u00e9e (toutes les pages, page courante, s\u00e9lection), pr\u00e9server la casse."}
+]},
+{id:"translation",title:"Traduction",intro:"Flux de travail multilingue pour g\u00e9rer les traductions par bulle.",items:[
+{h:"Panneau de traduction",c:"<b>Fichier \u2192 Traduire</b> (<kbd>Ctrl+Shift+T</kbd>). Ajoutez des langues cibles."},
+{h:"Traduire",c:"S\u00e9lectionnez une bulle et entrez la traduction pour la langue active."},
+{h:"Changer de langue",c:"Changez la langue active pour visualiser les traductions sur le canevas."},
+{h:"Exporter",c:"Exportez par langue avec des dossiers s\u00e9par\u00e9s ou des codes de langue dans les noms de fichier."}
+]},
+{id:"guides",title:"Guides et alignement",intro:"Guides, grilles et outils d'alignement pour un positionnement pr\u00e9cis.",items:[
+{h:"Ajouter des guides",c:"Horizontaux\u00a0: <kbd>Ctrl+Alt+H</kbd>. Verticaux\u00a0: <kbd>Ctrl+Alt+V</kbd>."},
+{h:"Accrochage",c:"<b>Accrocher aux guides</b> et <b>Accrocher \u00e0 la grille</b> (<kbd>Ctrl+Shift+G</kbd>)."},
+{h:"Grille",c:"<kbd>Ctrl+G</kbd> pour afficher/masquer. Personnalisez dans <b>Pr\u00e9f\u00e9rences \u2192 Canevas</b>."},
+{h:"Aligner et distribuer",c:"<b>\u00c9dition \u2192 Aligner</b> et <b>\u00c9dition \u2192 Distribuer</b>."},
+{h:"Verrouiller les guides",c:"Emp\u00eachez le d\u00e9placement accidentel des guides."}
+]},
+{id:"export",title:"Exporter",intro:"Exportez vos pages dans divers formats pour l'impression, le web ou la distribution num\u00e9rique.",items:[
+{h:"Ouvrir",c:"<b>Fichier \u2192 Exporter</b> (<kbd>Ctrl+Shift+E</kbd>)."},
+{h:"DPI et qualit\u00e9",c:"R\u00e9solution (DPI) et qualit\u00e9 (1\u2013100%)."},
+{h:"Options",c:"Fond transparent, superposition seule, bordures de case, m\u00e9tadonn\u00e9es."},
+{h:"Port\u00e9e",c:"Page courante ou toutes. Calques visibles ou s\u00e9lection uniquement."},
+{h:"Traductions",c:"Par langue avec dossiers ou codes dans le nom de fichier."},
+{h:"Nom de fichier",c:"Motifs personnalis\u00e9s comme <code>{document}-page-{page}</code>."}
+]},
+
+{id:"preferences",title:"Pr\u00e9f\u00e9rences",intro:"Personnalisez Letterist selon votre flux de travail.",items:[
+{h:"Ouvrir",c:"<b>Fichier \u2192 Pr\u00e9f\u00e9rences</b> (<kbd>Ctrl+,</kbd>)."},
+{h:"G\u00e9n\u00e9ral",c:"Langue, dimensions de page, DPI, sauvegarde automatique, fichiers r\u00e9cents."},
+{h:"Unit\u00e9s",c:"Pixels, pouces, centim\u00e8tres, millim\u00e8tres, points ou picas. R\u00e8gles."},
+{h:"Canevas",c:"Couleur de fond, grille, poign\u00e9es, zoom, d\u00e9filement."},
+{h:"Export",c:"Format, DPI, qualit\u00e9, dossier et motif de nom par d\u00e9faut."},
+{h:"Performance",c:"Historique d'annulation, cache de miniatures, acc\u00e9l\u00e9ration mat\u00e9rielle, m\u00e9moire."},
+{h:"Raccourcis",c:"Personnalisez tous les raccourcis clavier."},
+{h:"Importer/exporter",c:"Sauvegardez ou restaurez vos pr\u00e9f\u00e9rences."}
+]}
+]
+},
+"pt-br":{
+title:"Guia de ajuda do Letterist",
+subtitle:"Refer\u00eancia completa de todos os recursos do Letterist",
+tocTitle:"\u00cdndice",
+quickText:"Prefere um guia r\u00e1pido? Experimente o in\u00edcio r\u00e1pido.",
+quickLink:"Abrir in\u00edcio r\u00e1pido",
+foot:"Use a barra de busca no topo da janela de ajuda para encontrar t\u00f3picos espec\u00edficos.",
+sections:[
+{id:"workspace",title:"O espa\u00e7o de trabalho",intro:"O espa\u00e7o de trabalho do Letterist \u00e9 organizado ao redor de uma tela central com pain\u00e9is de ferramentas em cada lado.",items:[
+{h:"Tela",c:"\u00c1rea central de edi\u00e7\u00e3o. <b>Rolar</b>: Espa\u00e7o+arrastar ou bot\u00e3o central do mouse. <b>Zoom</b>: Ctrl+roda, <kbd>Ctrl+Mais</kbd>/<kbd>Ctrl+Menos</kbd>. <kbd>Ctrl+0</kbd> para ajustar \u00e0 tela."},
+{h:"Barra lateral esquerda",c:"Quatro abas: <b>P\u00e1ginas</b>, <b>Camadas</b>, <b>Quadros</b> e <b>Guias</b> (guias de alinhamento, grade, ajuste)."},
+{h:"Barra lateral direita",c:"Inspetor de propriedades com abas: <b>Bal\u00e3o</b>, <b>Texto</b>, <b>Cauda</b> e <b>Efeitos</b>."},
+{h:"Barra de ferramentas",c:"Acesso r\u00e1pido a ferramentas, arquivo, hist\u00f3rico, \u00e1rea de transfer\u00eancia, zoom e ajuste."},
+{h:"Barra de status",c:"Mensagens de status, n\u00edvel de zoom e idioma de tradu\u00e7\u00e3o ativo."},
+{h:"Tela cheia",c:"<kbd>Tab</kbd> para ocultar barras laterais. <kbd>Tab</kbd> novamente para restaurar."},
+]},
+{id:"documents",title:"Documentos e p\u00e1ginas",intro:"Gerencie seus projetos e organize quadrinhos de v\u00e1rias p\u00e1ginas.",items:[
+{h:"Criar documento",c:"<b>Arquivo \u2192 Novo</b> (<kbd>Ctrl+N</kbd>). Escolha um tamanho predefinido ou personalizado."},
+{h:"Abrir e salvar",c:"<b>Arquivo \u2192 Abrir</b> (<kbd>Ctrl+O</kbd>). Salvar: <kbd>Ctrl+S</kbd>. Salvar como: <kbd>Ctrl+Shift+S</kbd>. Salvamento autom\u00e1tico peri\u00f3dico."},
+{h:"Gerenciar p\u00e1ginas",c:"Adicionar: <kbd>Ctrl+Alt+N</kbd>. Na aba <b>P\u00e1ginas</b>, navegue, exclua, duplique ou reordene."},
+{h:"Configura\u00e7\u00f5es do documento",c:"<b>Arquivo \u2192 Configura\u00e7\u00f5es</b>: nome, tamanho, DPI, unidades, dire\u00e7\u00e3o de leitura."}
+]},
+{id:"panels",title:"Layout de quadros",intro:"Quadros definem a estrutura visual da p\u00e1gina: as bordas que organizam sua arte.",items:[
+{h:"Modo quadros",c:"<kbd>P</kbd> para entrar no modo de layout. <kbd>P</kbd> novamente para voltar."},
+{h:"Desenhar quadros",c:"Ferramentas: <b>Ret\u00e2ngulo</b>, <b>Ret\u00e2ngulo arredondado</b>, <b>Elipse</b>, <b>Pol\u00edgono</b>, <b>Forma livre</b>."},
+{h:"Propriedades",c:"Posi\u00e7\u00e3o, tamanho, raio de canto, cor/largura/estilo da borda, margem segura."},
+{h:"Templates e ordem de leitura",c:"Salve layouts em <b>P\u00e1gina \u2192 Templates de quadro</b>. Defina a dire\u00e7\u00e3o de leitura na aba <b>Guias</b>."},
+{h:"Calhas",c:"Ajuste o espa\u00e7amento entre quadros na aba <b>Guias</b>."}
+]},
+{id:"balloons",title:"Bal\u00f5es",intro:"Bal\u00f5es s\u00e3o o elemento central: as formas que contêm seus di\u00e1logos e narra\u00e7\u00e3o.",items:[
+{h:"Criar bal\u00f5es",c:"<kbd>B</kbd> e clique na tela. Duplo clique para digitar. <kbd>S</kbd> para SFX sem borda."},
+{h:"Selecionar e mover",c:"<kbd>V</kbd> para selecionar. Arraste para mover. <b>Shift+clique</b> para sele\u00e7\u00e3o m\u00faltipla. Setas para mover 1px."},
+{h:"Redimensionar e rotacionar",c:"Arraste as al\u00e7as para redimensionar. Rota\u00e7\u00e3o na aba <b>Bal\u00e3o</b>."},
+{h:"Formas",c:"<b>Oval</b>, <b>Ret\u00e2ngulo arredondado</b>, <b>Ret\u00e2ngulo</b>, <b>R\u00e1dio</b>, <b>Pensamento</b>, <b>Respingo</b>, <b>Explos\u00e3o</b>, <b>Sussurro</b>, <b>Personalizado</b> (SVG), <b>Nenhum</b>."},
+{h:"Preenchimento e contorno",c:"Cor de preenchimento e contorno na aba <b>Bal\u00e3o</b>."},
+{h:"Vincular bal\u00f5es",c:"<b>Objetos \u2192 Vincular</b> (<kbd>Ctrl+L</kbd>). Desvincular: <kbd>Ctrl+Shift+L</kbd>."},
+{h:"Agrupar e alinhar",c:"Agrupar: <kbd>Ctrl+G</kbd>. <b>Editar \u2192 Alinhar</b> e <b>Editar \u2192 Distribuir</b>."},
+{h:"Visibilidade e bloqueio",c:"Ocultar sem excluir. Bloquear para evitar edi\u00e7\u00f5es acidentais."}
+]},
+{id:"text",title:"Texto e estilo",intro:"Formate seus di\u00e1logos com controles tipogr\u00e1ficos profissionais.",items:[
+{h:"Editar texto",c:"Duplo clique no bal\u00e3o para editar. <kbd>Escape</kbd> para finalizar."},
+{h:"Sele\u00e7\u00e3o de fonte",c:"Clique no nome da fonte na aba <b>Texto</b> para abrir o <b>Seletor de fontes</b>."},
+{h:"Tamanho, cor e alinhamento",c:"Ajuste na aba <b>Texto</b>."},
+{h:"Formata\u00e7\u00e3o de caracteres",c:"<kbd>Ctrl+B</kbd> negrito, <kbd>Ctrl+I</kbd> it\u00e1lico, <kbd>Ctrl+U</kbd> sublinhado. Tamb\u00e9m: tachado, contorno, subscrito, sobrescrito."},
+{h:"Espa\u00e7amento e mai\u00fasculas",c:"Tracking, altura de linha e modo tudo em mai\u00fasculas."},
+{h:"Efeitos",c:"Aba <b>Efeitos</b>: sombra, brilho, extrus\u00e3o 3D, desfoque de movimento."},
+{h:"Copiar/colar estilo",c:"<kbd>Ctrl+Alt+C</kbd> para copiar, <kbd>Ctrl+Alt+V</kbd> para aplicar."}
+]},
+{id:"tails",title:"Caudas",intro:"Caudas apontam do bal\u00e3o para o personagem que fala.",items:[
+{h:"Adicionar",c:"Selecione um bal\u00e3o e pressione <kbd>T</kbd>. Arraste a ponta para o falante."},
+{h:"Estilos",c:"<b>Ponteiro</b>, <b>Curvada</b>, <b>Bolhas de pensamento</b>, <b>Ondulada</b>, <b>Nenhuma</b>."},
+{h:"Largura e curvatura",c:"Ajuste com os controles na aba <b>Cauda</b>."},
+{h:"M\u00faltiplas caudas",c:"Um bal\u00e3o pode ter v\u00e1rias caudas para m\u00faltiplos falantes."},
+{h:"Remover",c:"<kbd>T</kbd> novamente para remover a cauda."}
+]},
+{id:"layers",title:"Camadas",intro:"Camadas controlam a ordem de empilhamento em cada p\u00e1gina.",items:[
+{h:"Painel de camadas",c:"Aba <b>Camadas</b> na barra lateral esquerda."},
+{h:"Adicionar",c:"<b>P\u00e1gina \u2192 Nova camada</b> (<kbd>Ctrl+Shift+N</kbd>)."},
+{h:"Visibilidade e bloqueio",c:"Ocultar temporariamente ou bloquear para evitar edi\u00e7\u00f5es."},
+{h:"Reordenar",c:"<b>P\u00e1gina \u2192 Mover camada acima/abaixo</b>."},
+{h:"Opacidade",c:"Opacidade 0\u2013100% para transpar\u00eancia."}
+]},
+{id:"images",title:"Imagens",intro:"Adicione arte, fundos e imagens decorativas.",items:[
+{h:"Imagem de fundo",c:"<b>Objetos \u2192 Abrir imagem</b> (<kbd>Ctrl+Shift+O</kbd>). Remover: <b>Objetos \u2192 Limpar imagem de fundo</b>."},
+{h:"Imagens flutuantes",c:"<b>Objetos \u2192 Importar decora\u00e7\u00e3o</b> (<kbd>I</kbd>)."},
+{h:"Outros m\u00e9todos",c:"URL, \u00e1rea de transfer\u00eancia (<kbd>Ctrl+Shift+V</kbd>), importa\u00e7\u00e3o em lote ou arrastar e soltar."}
+]},
+{id:"styles",title:"Estilos e templates",intro:"Salve e reutilize configura\u00e7\u00f5es para consist\u00eancia.",items:[
+{h:"Estilos nomeados",c:"Salve a apar\u00eancia como <b>estilo nomeado</b> e aplique a outros bal\u00f5es."},
+{h:"Biblioteca",c:"Importe/exporte em <b>Arquivo \u2192 Biblioteca de estilos</b>."},
+{h:"Templates de bal\u00e3o",c:"Salve configura\u00e7\u00f5es completas. Atribua a <kbd>Alt+1</kbd> at\u00e9 <kbd>Alt+9</kbd>."},
+{h:"Templates de quadro",c:"<b>P\u00e1gina \u2192 Templates de quadro</b>."}
+]},
+{id:"findreplace",title:"Buscar e substituir",intro:"Busque texto em todos os bal\u00f5es.",items:[
+{h:"Buscar",c:"<kbd>Ctrl+F</kbd>. Digite e pressione Enter."},
+{h:"Substituir",c:"<kbd>Ctrl+H</kbd>. <b>Substituir</b> ou <b>Substituir tudo</b>."},
+{h:"Op\u00e7\u00f5es",c:"Diferenciar mai\u00fasculas, escopo (todas as p\u00e1ginas, p\u00e1gina atual, sele\u00e7\u00e3o), preservar capitaliza\u00e7\u00e3o."}
+]},
+{id:"translation",title:"Tradu\u00e7\u00e3o",intro:"Fluxo multilíngue para gerenciar tradu\u00e7\u00f5es por bal\u00e3o.",items:[
+{h:"Painel de tradu\u00e7\u00e3o",c:"<b>Arquivo \u2192 Traduzir</b> (<kbd>Ctrl+Shift+T</kbd>). Adicione idiomas alvo."},
+{h:"Traduzir",c:"Selecione um bal\u00e3o e insira a tradu\u00e7\u00e3o para o idioma ativo."},
+{h:"Trocar idioma",c:"Mude o idioma ativo para visualizar tradu\u00e7\u00f5es na tela."},
+{h:"Exportar",c:"Exporte por idioma com pastas separadas ou c\u00f3digos no nome do arquivo."}
+]},
+{id:"guides",title:"Guias e alinhamento",intro:"Guias, grades e ferramentas de alinhamento para posicionamento preciso.",items:[
+{h:"Adicionar guias",c:"Horizontais: <kbd>Ctrl+Alt+H</kbd>. Verticais: <kbd>Ctrl+Alt+V</kbd>."},
+{h:"Ajuste",c:"<b>Ajustar a guias</b> e <b>Ajustar a grade</b> (<kbd>Ctrl+Shift+G</kbd>)."},
+{h:"Grade",c:"<kbd>Ctrl+G</kbd> para exibir/ocultar. Personalize em <b>Prefer\u00eancias \u2192 Tela</b>."},
+{h:"Alinhar e distribuir",c:"<b>Editar \u2192 Alinhar</b> e <b>Editar \u2192 Distribuir</b>."},
+{h:"Bloquear guias",c:"Evite mover guias acidentalmente."}
+]},
+{id:"export",title:"Exportar",intro:"Exporte suas p\u00e1ginas em v\u00e1rios formatos.",items:[
+{h:"Abrir",c:"<b>Arquivo \u2192 Exportar</b> (<kbd>Ctrl+Shift+E</kbd>)."},
+{h:"DPI e qualidade",c:"Resolu\u00e7\u00e3o (DPI) e qualidade (1\u2013100%)."},
+{h:"Op\u00e7\u00f5es",c:"Fundo transparente, sobreposi\u00e7\u00e3o, bordas de quadro, metadados."},
+{h:"Escopo",c:"P\u00e1gina atual ou todas. Camadas vis\u00edveis ou sele\u00e7\u00e3o."},
+{h:"Tradu\u00e7\u00f5es",c:"Por idioma com pastas ou c\u00f3digos no nome."},
+{h:"Padr\u00e3o de nome",c:"Padr\u00f5es como <code>{document}-page-{page}</code>."}
+]},
+
+{id:"preferences",title:"Prefer\u00eancias",intro:"Personalize o Letterist para seu fluxo de trabalho.",items:[
+{h:"Abrir",c:"<b>Arquivo \u2192 Prefer\u00eancias</b> (<kbd>Ctrl+,</kbd>)."},
+{h:"Geral",c:"Idioma, dimens\u00f5es de p\u00e1gina, DPI, salvamento autom\u00e1tico, arquivos recentes."},
+{h:"Unidades",c:"Pixels, polegadas, cent\u00edmetros, mil\u00edmetros, pontos ou picas. R\u00e9guas."},
+{h:"Tela",c:"Cor de fundo, grade, al\u00e7as, zoom, rolagem."},
+{h:"Exportar",c:"Formato, DPI, qualidade, pasta e padr\u00e3o de nome padr\u00e3o."},
+{h:"Desempenho",c:"Limite de desfazer, cache, acelera\u00e7\u00e3o por hardware, mem\u00f3ria."},
+{h:"Atalhos",c:"Personalize todos os atalhos de teclado."},
+{h:"Importar/exportar",c:"Salve ou restaure prefer\u00eancias."}
+]}
+]
+},
+"de":{
+title:"Letterist-Hilfe",
+subtitle:"Vollst\u00e4ndige Referenz aller Funktionen von Letterist",
+tocTitle:"Inhaltsverzeichnis",
+quickText:"Lieber eine Schnellanleitung? Probieren Sie den Schnellstart.",
+quickLink:"Schnellstart \u00f6ffnen",
+foot:"Verwenden Sie die Suchleiste oben im Hilfefenster, um bestimmte Themen zu finden.",
+sections:[
+{id:"workspace",title:"Der Arbeitsbereich",intro:"Letterists Arbeitsbereich ist um eine zentrale Leinwand mit Werkzeugpanels auf beiden Seiten organisiert.",items:[
+{h:"Leinwand",c:"Zentraler Bearbeitungsbereich. <b>Schwenken</b>: Leertaste+Ziehen oder mittlere Maustaste. <b>Zoom</b>: Ctrl+Mausrad, <kbd>Ctrl+Plus</kbd>/<kbd>Ctrl+Minus</kbd>. <kbd>Ctrl+0</kbd> zum Anpassen."},
+{h:"Linke Seitenleiste",c:"Vier Tabs: <b>Seiten</b>, <b>Ebenen</b>, <b>Panels</b> und <b>Hilfslinien</b> (Ausrichtung, Raster, Einrasten)."},
+{h:"Rechte Seitenleiste",c:"Eigenschafteninspektor mit Tabs: <b>Blase</b>, <b>Text</b>, <b>Schwanz</b> und <b>Effekte</b>."},
+{h:"Symbolleiste",c:"Schnellzugriff auf Werkzeuge, Datei, Verlauf, Zwischenablage, Zoom und Einrasten."},
+{h:"Statusleiste",c:"Statusmeldungen, Zoomstufe und aktive \u00dcbersetzungssprache."},
+{h:"Vollbild-Leinwand",c:"<kbd>Tab</kbd> zum Ausblenden der Seitenleisten. <kbd>Tab</kbd> erneut zum Wiederherstellen."},
+]},
+{id:"documents",title:"Dokumente und Seiten",intro:"Verwalten Sie Ihre Projekte und organisieren Sie mehrseitige Comics.",items:[
+{h:"Dokument erstellen",c:"<b>Datei \u2192 Neues Dokument</b> (<kbd>Ctrl+N</kbd>). W\u00e4hlen Sie eine Vorlage oder eigene Ma\u00dfe."},
+{h:"\u00d6ffnen und Speichern",c:"<b>Datei \u2192 \u00d6ffnen</b> (<kbd>Ctrl+O</kbd>). Speichern: <kbd>Ctrl+S</kbd>. Speichern unter: <kbd>Ctrl+Shift+S</kbd>. Automatische Speicherung."},
+{h:"Seiten verwalten",c:"Hinzuf\u00fcgen: <kbd>Ctrl+Alt+N</kbd>. Im <b>Seiten</b>-Tab navigieren, l\u00f6schen, duplizieren oder umsortieren."},
+{h:"Dokumenteinstellungen",c:"<b>Datei \u2192 Einstellungen</b>: Name, Gr\u00f6\u00dfe, DPI, Einheiten, Leserichtung."}
+]},
+{id:"panels",title:"Panel-Layout",intro:"Panels definieren die visuelle Struktur Ihrer Comic-Seite.",items:[
+{h:"Panel-Modus",c:"<kbd>P</kbd> zum Aktivieren. <kbd>P</kbd> erneut zur\u00fcck zur normalen Bearbeitung."},
+{h:"Panels zeichnen",c:"Werkzeuge: <b>Rechteck</b>, <b>Abgerundetes Rechteck</b>, <b>Ellipse</b>, <b>Polygon</b>, <b>Freiform</b>."},
+{h:"Eigenschaften",c:"Position, Gr\u00f6\u00dfe, Eckenradius, Rahmenfarbe/-breite/-stil, Sicherheitsrand."},
+{h:"Vorlagen und Lesereihenfolge",c:"Layouts speichern \u00fcber <b>Seite \u2192 Panelvorlagen</b>. Leserichtung im <b>Hilfslinien</b>-Tab festlegen."},
+{h:"Zwickel",c:"Abstand zwischen Panels im <b>Hilfslinien</b>-Tab anpassen."}
+]},
+{id:"balloons",title:"Sprechblasen",intro:"Sprechblasen enthalten Ihre Dialoge und Erz\u00e4hltexte.",items:[
+{h:"Erstellen",c:"<kbd>B</kbd> und auf die Leinwand klicken. Doppelklick zum Bearbeiten. <kbd>S</kbd> f\u00fcr SFX ohne Rahmen."},
+{h:"Ausw\u00e4hlen und Verschieben",c:"<kbd>V</kbd> zum Ausw\u00e4hlen. Ziehen zum Verschieben. <b>Shift+Klick</b> f\u00fcr Mehrfachauswahl. Pfeiltasten f\u00fcr 1px."},
+{h:"Gr\u00f6\u00dfe und Drehung",c:"Ecken ziehen zum Skalieren. Drehung im <b>Blase</b>-Tab."},
+{h:"Formen",c:"<b>Oval</b>, <b>Abgerundetes Rechteck</b>, <b>Rechteck</b>, <b>Radio</b>, <b>Denkblase</b>, <b>Klecks</b>, <b>Ausruf</b>, <b>Fl\u00fcstern</b>, <b>Benutzerdefiniert</b> (SVG), <b>Keine</b>."},
+{h:"F\u00fcllung und Rand",c:"F\u00fcll- und Randfarbe im <b>Blase</b>-Tab einstellen."},
+{h:"Verkn\u00fcpfen",c:"<b>Objekte \u2192 Verkn\u00fcpfen</b> (<kbd>Ctrl+L</kbd>). L\u00f6sen: <kbd>Ctrl+Shift+L</kbd>."},
+{h:"Gruppieren und Ausrichten",c:"Gruppieren: <kbd>Ctrl+G</kbd>. <b>Bearbeiten \u2192 Ausrichten</b> und <b>Bearbeiten \u2192 Verteilen</b>."},
+{h:"Sichtbarkeit und Sperre",c:"Ausblenden ohne L\u00f6schen. Sperren gegen versehentliche \u00c4nderungen."}
+]},
+{id:"text",title:"Text und Stil",intro:"Formatieren Sie Ihre Dialoge mit professionellen Typografie-Steuerelementen.",items:[
+{h:"Text bearbeiten",c:"Doppelklick auf eine Blase. <kbd>Escape</kbd> zum Beenden."},
+{h:"Schriftwahl",c:"Klicken Sie auf den Schriftnamen im <b>Text</b>-Tab f\u00fcr den <b>Schriftw\u00e4hler</b>."},
+{h:"Gr\u00f6\u00dfe, Farbe, Ausrichtung",c:"Im <b>Text</b>-Tab anpassen."},
+{h:"Zeichenformatierung",c:"<kbd>Ctrl+B</kbd> fett, <kbd>Ctrl+I</kbd> kursiv, <kbd>Ctrl+U</kbd> unterstrichen. Au\u00dferdem: durchgestrichen, Kontur, tiefgestellt, hochgestellt."},
+{h:"Abstand und Gro\u00dfbuchstaben",c:"Zeichenabstand (Tracking), Zeilenh\u00f6he und Gro\u00dfbuchstabenmodus."},
+{h:"Texteffekte",c:"<b>Effekte</b>-Tab: Schlagschatten, Gl\u00fchen, 3D-Extrusion, Bewegungsunsch\u00e4rfe."},
+{h:"Stil kopieren/einf\u00fcgen",c:"<kbd>Ctrl+Alt+C</kbd> kopieren, <kbd>Ctrl+Alt+V</kbd> anwenden."}
+]},
+{id:"tails",title:"Schw\u00e4nze",intro:"Schw\u00e4nze zeigen von einer Blase zum sprechenden Charakter.",items:[
+{h:"Hinzuf\u00fcgen",c:"Blase ausw\u00e4hlen und <kbd>T</kbd> dr\u00fccken. Spitze zum Sprecher ziehen."},
+{h:"Stile",c:"<b>Zeiger</b>, <b>Gebogen</b>, <b>Denkblasen</b>, <b>Wellenf\u00f6rmig</b>, <b>Keiner</b>."},
+{h:"Breite und Kr\u00fcmmung",c:"Im <b>Schwanz</b>-Tab einstellen."},
+{h:"Mehrere Schw\u00e4nze",c:"Eine Blase kann mehrere Schw\u00e4nze f\u00fcr verschiedene Sprecher haben."},
+{h:"Entfernen",c:"<kbd>T</kbd> erneut zum Entfernen."}
+]},
+{id:"layers",title:"Ebenen",intro:"Ebenen steuern die Stapelreihenfolge auf jeder Seite.",items:[
+{h:"Ebenenpanel",c:"<b>Ebenen</b>-Tab in der linken Seitenleiste."},
+{h:"Hinzuf\u00fcgen",c:"<b>Seite \u2192 Neue Ebene</b> (<kbd>Ctrl+Shift+N</kbd>)."},
+{h:"Sichtbarkeit und Sperre",c:"Tempor\u00e4r ausblenden oder sperren."},
+{h:"Umsortieren",c:"<b>Seite \u2192 Ebene hoch/runter</b>."},
+{h:"Deckkraft",c:"Deckkraft 0\u2013100% f\u00fcr Transparenzeffekte."}
+]},
+{id:"images",title:"Bilder",intro:"F\u00fcgen Sie Artwork, Hintergr\u00fcnde und Dekorationsbilder hinzu.",items:[
+{h:"Hintergrundbild",c:"<b>Objekte \u2192 Bild \u00f6ffnen</b> (<kbd>Ctrl+Shift+O</kbd>). Entfernen: <b>Objekte \u2192 Hintergrundbild l\u00f6schen</b>."},
+{h:"Schwebende Bilder",c:"<b>Objekte \u2192 Dekoration importieren</b> (<kbd>I</kbd>)."},
+{h:"Weitere Methoden",c:"URL, Zwischenablage (<kbd>Ctrl+Shift+V</kbd>), Stapelimport oder Drag & Drop."}
+]},
+{id:"styles",title:"Stile und Vorlagen",intro:"Speichern und wiederverwenden Sie Konfigurationen f\u00fcr konsistentes Lettering.",items:[
+{h:"Benannte Stile",c:"Erscheinungsbild als <b>benannten Stil</b> speichern und auf andere Blasen anwenden."},
+{h:"Bibliothek",c:"Import/Export \u00fcber <b>Datei \u2192 Stilbibliothek</b>."},
+{h:"Blasenvorlagen",c:"Komplette Konfigurationen speichern. Hotkeys <kbd>Alt+1</kbd> bis <kbd>Alt+9</kbd> zuweisen."},
+{h:"Panelvorlagen",c:"<b>Seite \u2192 Panelvorlagen</b>."}
+]},
+{id:"findreplace",title:"Suchen und Ersetzen",intro:"Text in allen Blasen suchen und optional ersetzen.",items:[
+{h:"Suchen",c:"<kbd>Ctrl+F</kbd>. Suchtext eingeben und Enter dr\u00fccken."},
+{h:"Ersetzen",c:"<kbd>Ctrl+H</kbd>. <b>Ersetzen</b> oder <b>Alle ersetzen</b>."},
+{h:"Optionen",c:"Gro\u00df-/Kleinschreibung beachten, Suchbereich (alle Seiten, aktuelle Seite, Auswahl), Schreibweise beibehalten."}
+]},
+{id:"translation",title:"\u00dcbersetzung",intro:"Mehrsprachige Workflows f\u00fcr \u00dcbersetzungen pro Blase.",items:[
+{h:"\u00dcbersetzungspanel",c:"<b>Datei \u2192 \u00dcbersetzen</b> (<kbd>Ctrl+Shift+T</kbd>). Zielsprachen hinzuf\u00fcgen."},
+{h:"\u00dcbersetzen",c:"Blase ausw\u00e4hlen und \u00dcbersetzung f\u00fcr die aktive Sprache eingeben."},
+{h:"Sprache wechseln",c:"Aktive Sprache \u00e4ndern, um \u00dcbersetzungen auf der Leinwand zu sehen."},
+{h:"Exportieren",c:"Pro Sprache mit separaten Ordnern oder Sprachcodes im Dateinamen exportieren."}
+]},
+{id:"guides",title:"Hilfslinien und Ausrichtung",intro:"Hilfslinien, Raster und Ausrichtungswerkzeuge f\u00fcr pr\u00e4zise Positionierung.",items:[
+{h:"Hilfslinien hinzuf\u00fcgen",c:"Horizontal: <kbd>Ctrl+Alt+H</kbd>. Vertikal: <kbd>Ctrl+Alt+V</kbd>."},
+{h:"Einrasten",c:"<b>An Hilfslinien einrasten</b> und <b>Am Raster einrasten</b> (<kbd>Ctrl+Shift+G</kbd>)."},
+{h:"Raster",c:"<kbd>Ctrl+G</kbd> zum Ein-/Ausblenden. Anpassen in <b>Einstellungen \u2192 Leinwand</b>."},
+{h:"Ausrichten und Verteilen",c:"<b>Bearbeiten \u2192 Ausrichten</b> und <b>Bearbeiten \u2192 Verteilen</b>."},
+{h:"Hilfslinien sperren",c:"Versehentliches Verschieben verhindern."}
+]},
+{id:"export",title:"Exportieren",intro:"Exportieren Sie Ihre Seiten in verschiedenen Formaten.",items:[
+{h:"\u00d6ffnen",c:"<b>Datei \u2192 Exportieren</b> (<kbd>Ctrl+Shift+E</kbd>)."},
+{h:"DPI und Qualit\u00e4t",c:"Aufl\u00f6sung (DPI) und Qualit\u00e4t (1\u2013100%)."},
+{h:"Optionen",c:"Transparenter Hintergrund, nur \u00dcberlagerung, Panelr\u00e4nder, Metadaten."},
+{h:"Umfang",c:"Aktuelle Seite oder alle. Sichtbare Ebenen oder nur Auswahl."},
+{h:"\u00dcbersetzungen",c:"Pro Sprache mit Ordnern oder Codes im Dateinamen."},
+{h:"Dateinamen",c:"Muster wie <code>{document}-page-{page}</code>."}
+]},
+
+{id:"preferences",title:"Einstellungen",intro:"Passen Sie Letterist an Ihren Workflow an.",items:[
+{h:"\u00d6ffnen",c:"<b>Datei \u2192 Einstellungen</b> (<kbd>Ctrl+,</kbd>)."},
+{h:"Allgemein",c:"Sprache, Standardseitengr\u00f6\u00dfe, DPI, Autospeicherung, letzte Dateien."},
+{h:"Einheiten",c:"Pixel, Zoll, Zentimeter, Millimeter, Punkte oder Pica. Lineale."},
+{h:"Leinwand",c:"Hintergrundfarbe, Raster, Griffe, Zoom, Scroll-Geschwindigkeit."},
+{h:"Export",c:"Standardformat, DPI, Qualit\u00e4t, Ordner und Dateinamen."},
+{h:"Leistung",c:"Verlaufslimit, Thumbnail-Cache, Hardware-Beschleunigung, Speicher."},
+{h:"Tastaturk\u00fcrzel",c:"Alle K\u00fcrzel anpassen."},
+{h:"Importieren/Exportieren",c:"Einstellungen sichern oder wiederherstellen."}
+]}
+]
+},
+"zh-cn":{
+title:"Letterist \u5e2e\u52a9\u6307\u5357",
+subtitle:"Letterist \u6240\u6709\u529f\u80fd\u7684\u5b8c\u6574\u53c2\u8003",
+tocTitle:"\u76ee\u5f55",
+quickText:"\u60f3\u8981\u5feb\u901f\u5165\u95e8\uff1f\u8bd5\u8bd5\u5feb\u901f\u5165\u95e8\u6307\u5357\u3002",
+quickLink:"\u6253\u5f00\u5feb\u901f\u5165\u95e8",
+foot:"\u4f7f\u7528\u5e2e\u52a9\u7a97\u53e3\u9876\u90e8\u7684\u641c\u7d22\u680f\u67e5\u627e\u7279\u5b9a\u4e3b\u9898\u3002",
+sections:[
+{id:"workspace",title:"\u5de5\u4f5c\u533a",intro:"Letterist \u7684\u5de5\u4f5c\u533a\u4ee5\u4e2d\u592e\u753b\u5e03\u4e3a\u6838\u5fc3\uff0c\u4e24\u4fa7\u914d\u6709\u5de5\u5177\u9762\u677f\u3002",items:[
+{h:"\u753b\u5e03",c:"\u4e2d\u592e\u7f16\u8f91\u533a\u57df\u3002<b>\u5e73\u79fb</b>\uff1a\u6309\u4f4f\u7a7a\u683c\u62d6\u52a8\u6216\u4f7f\u7528\u9f20\u6807\u4e2d\u952e\u3002<b>\u7f29\u653e</b>\uff1aCtrl+\u6eda\u8f6e\u3001<kbd>Ctrl+\u52a0\u53f7</kbd>/<kbd>Ctrl+\u51cf\u53f7</kbd>\u3002<kbd>Ctrl+0</kbd> \u7f29\u653e\u81f3\u9002\u5408\u3002"},
+{h:"\u5de6\u4fa7\u680f",c:"\u56db\u4e2a\u9009\u9879\u5361\uff1a<b>\u9875\u9762</b>\u3001<b>\u56fe\u5c42</b>\u3001<b>\u5206\u955c</b>\u548c<b>\u53c2\u8003\u7ebf</b>\uff08\u5bf9\u9f50\u53c2\u8003\u7ebf\u3001\u7f51\u683c\u3001\u5438\u9644\uff09\u3002"},
+{h:"\u53f3\u4fa7\u680f",c:"\u5c5e\u6027\u68c0\u67e5\u5668\uff0c\u5305\u542b\u9009\u9879\u5361\uff1a<b>\u6c14\u6ce1</b>\u3001<b>\u6587\u5b57</b>\u3001<b>\u5c3e\u5df4</b>\u548c<b>\u6548\u679c</b>\u3002"},
+{h:"\u5de5\u5177\u680f",c:"\u5feb\u901f\u8bbf\u95ee\u5de5\u5177\u3001\u6587\u4ef6\u3001\u5386\u53f2\u3001\u526a\u8d34\u677f\u3001\u7f29\u653e\u548c\u5438\u9644\u3002"},
+{h:"\u72b6\u6001\u680f",c:"\u72b6\u6001\u6d88\u606f\u3001\u7f29\u653e\u7ea7\u522b\u548c\u5f53\u524d\u7ffb\u8bd1\u8bed\u8a00\u3002"},
+{h:"\u5168\u5c4f\u753b\u5e03",c:"<kbd>Tab</kbd> \u9690\u85cf\u4fa7\u8fb9\u680f\u3002\u518d\u6309 <kbd>Tab</kbd> \u6062\u590d\u3002"},
+]},
+{id:"documents",title:"\u6587\u6863\u4e0e\u9875\u9762",intro:"\u7ba1\u7406\u9879\u76ee\u5e76\u7ec4\u7ec7\u591a\u9875\u6f2b\u753b\u3002",items:[
+{h:"\u521b\u5efa\u6587\u6863",c:"<b>\u6587\u4ef6 \u2192 \u65b0\u5efa</b>(<kbd>Ctrl+N</kbd>)\u3002\u9009\u62e9\u9884\u8bbe\u5c3a\u5bf8\u6216\u81ea\u5b9a\u4e49\u5c3a\u5bf8\u3002"},
+{h:"\u6253\u5f00\u4e0e\u4fdd\u5b58",c:"<b>\u6587\u4ef6 \u2192 \u6253\u5f00</b>(<kbd>Ctrl+O</kbd>)\u3002\u4fdd\u5b58\uff1a<kbd>Ctrl+S</kbd>\u3002\u53e6\u5b58\u4e3a\uff1a<kbd>Ctrl+Shift+S</kbd>\u3002\u5b9a\u671f\u81ea\u52a8\u4fdd\u5b58\u3002"},
+{h:"\u7ba1\u7406\u9875\u9762",c:"\u6dfb\u52a0\uff1a<kbd>Ctrl+Alt+N</kbd>\u3002\u5728<b>\u9875\u9762</b>\u9009\u9879\u5361\u4e2d\u5bfc\u822a\u3001\u5220\u9664\u3001\u590d\u5236\u6216\u91cd\u65b0\u6392\u5e8f\u3002"},
+{h:"\u6587\u6863\u8bbe\u7f6e",c:"<b>\u6587\u4ef6 \u2192 \u8bbe\u7f6e</b>\uff1a\u540d\u79f0\u3001\u5c3a\u5bf8\u3001DPI\u3001\u5355\u4f4d\u3001\u9605\u8bfb\u65b9\u5411\u3002"}
+]},
+{id:"panels",title:"\u5206\u955c\u5e03\u5c40",intro:"\u5206\u955c\u5b9a\u4e49\u6f2b\u753b\u9875\u9762\u7684\u89c6\u89c9\u7ed3\u6784\u3002",items:[
+{h:"\u5206\u955c\u6a21\u5f0f",c:"<kbd>P</kbd> \u8fdb\u5165\u5206\u955c\u5e03\u5c40\u6a21\u5f0f\u3002\u518d\u6309 <kbd>P</kbd> \u8fd4\u56de\u3002"},
+{h:"\u7ed8\u5236\u5206\u955c",c:"\u5de5\u5177\uff1a<b>\u77e9\u5f62</b>\u3001<b>\u5706\u89d2\u77e9\u5f62</b>\u3001<b>\u692d\u5706</b>\u3001<b>\u591a\u8fb9\u5f62</b>\u3001<b>\u81ea\u7531\u5f62\u72b6</b>\u3002"},
+{h:"\u5c5e\u6027",c:"\u4f4d\u7f6e\u3001\u5c3a\u5bf8\u3001\u5706\u89d2\u3001\u8fb9\u6846\u989c\u8272/\u5bbd\u5ea6/\u6837\u5f0f\u3001\u5b89\u5168\u8fb9\u8ddd\u3002"},
+{h:"\u6a21\u677f\u548c\u9605\u8bfb\u987a\u5e8f",c:"\u901a\u8fc7<b>\u9875\u9762 \u2192 \u5206\u955c\u6a21\u677f</b>\u4fdd\u5b58\u5e03\u5c40\u3002\u5728<b>\u53c2\u8003\u7ebf</b>\u9009\u9879\u5361\u4e2d\u8bbe\u7f6e\u9605\u8bfb\u65b9\u5411\u3002"},
+{h:"\u95f4\u8ddd",c:"\u5728<b>\u53c2\u8003\u7ebf</b>\u9009\u9879\u5361\u4e2d\u8c03\u6574\u5206\u955c\u95f4\u8ddd\u3002"}
+]},
+{id:"balloons",title:"\u6c14\u6ce1",intro:"\u6c14\u6ce1\u662f\u6f2b\u753b\u5b57\u6548\u7684\u6838\u5fc3\u5143\u7d20\uff0c\u5305\u542b\u5bf9\u8bdd\u548c\u65c1\u767d\u3002",items:[
+{h:"\u521b\u5efa\u6c14\u6ce1",c:"<kbd>B</kbd> \u7136\u540e\u70b9\u51fb\u753b\u5e03\u3002\u53cc\u51fb\u8f93\u5165\u6587\u5b57\u3002<kbd>S</kbd> \u521b\u5efa\u65e0\u8fb9\u6846\u7684\u97f3\u6548\u6c14\u6ce1\u3002"},
+{h:"\u9009\u62e9\u548c\u79fb\u52a8",c:"<kbd>V</kbd> \u9009\u62e9\u3002\u62d6\u52a8\u79fb\u52a8\u3002<b>Shift+\u70b9\u51fb</b>\u591a\u9009\u3002\u65b9\u5411\u952e\u79fb\u52a8 1px\u3002"},
+{h:"\u8c03\u6574\u5927\u5c0f\u548c\u65cb\u8f6c",c:"\u62d6\u52a8\u8fb9\u89d2\u8c03\u6574\u5927\u5c0f\u3002\u5728<b>\u6c14\u6ce1</b>\u9009\u9879\u5361\u4e2d\u8bbe\u7f6e\u65cb\u8f6c\u89d2\u5ea6\u3002"},
+{h:"\u5f62\u72b6",c:"<b>\u692d\u5706</b>\u3001<b>\u5706\u89d2\u77e9\u5f62</b>\u3001<b>\u77e9\u5f62</b>\u3001<b>\u7535\u5b50</b>\u3001<b>\u601d\u8003\u6ce1</b>\u3001<b>\u6e85\u5c04</b>\u3001<b>\u7206\u70b8</b>\u3001<b>\u8033\u8bed</b>\u3001<b>\u81ea\u5b9a\u4e49</b>(SVG)\u3001<b>\u65e0</b>\u3002"},
+{h:"\u586b\u5145\u548c\u8fb9\u6846",c:"\u5728<b>\u6c14\u6ce1</b>\u9009\u9879\u5361\u4e2d\u8bbe\u7f6e\u586b\u5145\u8272\u548c\u8fb9\u6846\u989c\u8272\u3002"},
+{h:"\u94fe\u63a5\u6c14\u6ce1",c:"<b>\u5bf9\u8c61 \u2192 \u94fe\u63a5</b>(<kbd>Ctrl+L</kbd>)\u3002\u53d6\u6d88\u94fe\u63a5\uff1a<kbd>Ctrl+Shift+L</kbd>\u3002"},
+{h:"\u7f16\u7ec4\u548c\u5bf9\u9f50",c:"\u7f16\u7ec4\uff1a<kbd>Ctrl+G</kbd>\u3002<b>\u7f16\u8f91 \u2192 \u5bf9\u9f50</b>\u548c<b>\u7f16\u8f91 \u2192 \u5206\u5e03</b>\u3002"},
+{h:"\u53ef\u89c1\u6027\u548c\u9501\u5b9a",c:"\u9690\u85cf\u800c\u4e0d\u5220\u9664\u3002\u9501\u5b9a\u4ee5\u9632\u6b62\u610f\u5916\u4fee\u6539\u3002"}
+]},
+{id:"text",title:"\u6587\u5b57\u4e0e\u6837\u5f0f",intro:"\u4f7f\u7528\u4e13\u4e1a\u6392\u7248\u63a7\u4ef6\u683c\u5f0f\u5316\u5bf9\u8bdd\u3002",items:[
+{h:"\u7f16\u8f91\u6587\u5b57",c:"\u53cc\u51fb\u6c14\u6ce1\u8fdb\u5165\u7f16\u8f91\u6a21\u5f0f\u3002<kbd>Escape</kbd> \u5b8c\u6210\u3002"},
+{h:"\u5b57\u4f53\u9009\u62e9",c:"\u70b9\u51fb<b>\u6587\u5b57</b>\u9009\u9879\u5361\u4e2d\u7684\u5b57\u4f53\u540d\u79f0\u6253\u5f00<b>\u5b57\u4f53\u9009\u62e9\u5668</b>\u3002"},
+{h:"\u5927\u5c0f\u3001\u989c\u8272\u3001\u5bf9\u9f50",c:"\u5728<b>\u6587\u5b57</b>\u9009\u9879\u5361\u4e2d\u8c03\u6574\u3002"},
+{h:"\u5b57\u7b26\u683c\u5f0f",c:"<kbd>Ctrl+B</kbd> \u52a0\u7c97\uff0c<kbd>Ctrl+I</kbd> \u659c\u4f53\uff0c<kbd>Ctrl+U</kbd> \u4e0b\u5212\u7ebf\u3002\u8fd8\u6709\u5220\u9664\u7ebf\u3001\u8f6e\u5ed3\u3001\u4e0b\u6807\u3001\u4e0a\u6807\u3002"},
+{h:"\u95f4\u8ddd\u548c\u5927\u5199",c:"\u5b57\u8ddd(tracking)\u3001\u884c\u9ad8\u548c\u5168\u5927\u5199\u6a21\u5f0f\u3002"},
+{h:"\u6587\u5b57\u6548\u679c",c:"<b>\u6548\u679c</b>\u9009\u9879\u5361\uff1a\u9634\u5f71\u3001\u53d1\u5149\u30013D \u62c9\u4f38\u3001\u52a8\u611f\u6a21\u7cca\u3002"},
+{h:"\u590d\u5236/\u7c98\u8d34\u6837\u5f0f",c:"<kbd>Ctrl+Alt+C</kbd> \u590d\u5236\uff0c<kbd>Ctrl+Alt+V</kbd> \u5e94\u7528\u3002"}
+]},
+{id:"tails",title:"\u5c3e\u5df4",intro:"\u5c3e\u5df4\u4ece\u6c14\u6ce1\u6307\u5411\u8bf4\u8bdd\u7684\u89d2\u8272\u3002",items:[
+{h:"\u6dfb\u52a0",c:"\u9009\u62e9\u6c14\u6ce1\u5e76\u6309 <kbd>T</kbd>\u3002\u62d6\u52a8\u5c16\u7aef\u6307\u5411\u8bf4\u8bdd\u8005\u3002"},
+{h:"\u6837\u5f0f",c:"<b>\u6307\u9488</b>\u3001<b>\u5f2f\u66f2</b>\u3001<b>\u601d\u8003\u6ce1</b>\u3001<b>\u6ce2\u6d6a\u5f62</b>\u3001<b>\u65e0</b>\u3002"},
+{h:"\u5bbd\u5ea6\u548c\u66f2\u7387",c:"\u5728<b>\u5c3e\u5df4</b>\u9009\u9879\u5361\u4e2d\u8c03\u6574\u3002"},
+{h:"\u591a\u4e2a\u5c3e\u5df4",c:"\u4e00\u4e2a\u6c14\u6ce1\u53ef\u4ee5\u6709\u591a\u4e2a\u5c3e\u5df4\u3002"},
+{h:"\u79fb\u9664",c:"\u518d\u6309 <kbd>T</kbd> \u79fb\u9664\u3002"}
+]},
+{id:"layers",title:"\u56fe\u5c42",intro:"\u56fe\u5c42\u63a7\u5236\u6bcf\u9875\u5143\u7d20\u7684\u53e0\u653e\u987a\u5e8f\u3002",items:[
+{h:"\u56fe\u5c42\u9762\u677f",c:"\u5de6\u4fa7\u680f\u7684<b>\u56fe\u5c42</b>\u9009\u9879\u5361\u3002"},
+{h:"\u6dfb\u52a0",c:"<b>\u9875\u9762 \u2192 \u65b0\u5efa\u56fe\u5c42</b>(<kbd>Ctrl+Shift+N</kbd>)\u3002"},
+{h:"\u53ef\u89c1\u6027\u548c\u9501\u5b9a",c:"\u4e34\u65f6\u9690\u85cf\u6216\u9501\u5b9a\u4ee5\u9632\u6b62\u7f16\u8f91\u3002"},
+{h:"\u91cd\u65b0\u6392\u5e8f",c:"<b>\u9875\u9762 \u2192 \u4e0a\u79fb/\u4e0b\u79fb\u56fe\u5c42</b>\u3002"},
+{h:"\u4e0d\u900f\u660e\u5ea6",c:"\u4e0d\u900f\u660e\u5ea6 0\u2013100%\u3002"}
+]},
+{id:"images",title:"\u56fe\u50cf",intro:"\u6dfb\u52a0\u56fe\u7a3f\u3001\u80cc\u666f\u548c\u88c5\u9970\u56fe\u50cf\u3002",items:[
+{h:"\u80cc\u666f\u56fe",c:"<b>\u5bf9\u8c61 \u2192 \u6253\u5f00\u56fe\u50cf</b>(<kbd>Ctrl+Shift+O</kbd>)\u3002\u79fb\u9664\uff1a<b>\u5bf9\u8c61 \u2192 \u6e05\u9664\u80cc\u666f\u56fe</b>\u3002"},
+{h:"\u6d6e\u52a8\u56fe\u50cf",c:"<b>\u5bf9\u8c61 \u2192 \u5bfc\u5165\u88c5\u9970</b>(<kbd>I</kbd>)\u3002"},
+{h:"\u5176\u4ed6\u65b9\u6cd5",c:"URL\u3001\u526a\u8d34\u677f(<kbd>Ctrl+Shift+V</kbd>)\u3001\u6279\u91cf\u5bfc\u5165\u6216\u62d6\u653e\u3002"}
+]},
+{id:"styles",title:"\u6837\u5f0f\u4e0e\u6a21\u677f",intro:"\u4fdd\u5b58\u548c\u91cd\u590d\u4f7f\u7528\u914d\u7f6e\u4ee5\u4fdd\u6301\u4e00\u81f4\u6027\u3002",items:[
+{h:"\u547d\u540d\u6837\u5f0f",c:"\u5c06\u5916\u89c2\u4fdd\u5b58\u4e3a<b>\u547d\u540d\u6837\u5f0f</b>\u5e76\u5e94\u7528\u5230\u5176\u4ed6\u6c14\u6ce1\u3002"},
+{h:"\u6837\u5f0f\u5e93",c:"\u901a\u8fc7<b>\u6587\u4ef6 \u2192 \u6837\u5f0f\u5e93</b>\u5bfc\u5165/\u5bfc\u51fa\u3002"},
+{h:"\u6c14\u6ce1\u6a21\u677f",c:"\u4fdd\u5b58\u5b8c\u6574\u914d\u7f6e\u3002\u5206\u914d\u5230 <kbd>Alt+1</kbd> \u81f3 <kbd>Alt+9</kbd>\u3002"},
+{h:"\u5206\u955c\u6a21\u677f",c:"<b>\u9875\u9762 \u2192 \u5206\u955c\u6a21\u677f</b>\u3002"}
+]},
+{id:"findreplace",title:"\u67e5\u627e\u548c\u66ff\u6362",intro:"\u5728\u6240\u6709\u6c14\u6ce1\u4e2d\u641c\u7d22\u6587\u5b57\u3002",items:[
+{h:"\u67e5\u627e",c:"<kbd>Ctrl+F</kbd>\u3002\u8f93\u5165\u6587\u5b57\u5e76\u6309 Enter\u3002"},
+{h:"\u66ff\u6362",c:"<kbd>Ctrl+H</kbd>\u3002<b>\u66ff\u6362</b>\u6216<b>\u5168\u90e8\u66ff\u6362</b>\u3002"},
+{h:"\u9009\u9879",c:"\u533a\u5206\u5927\u5c0f\u5199\u3001\u641c\u7d22\u8303\u56f4\uff08\u6240\u6709\u9875\u9762\u3001\u5f53\u524d\u9875\u9762\u3001\u9009\u62e9\uff09\u3001\u4fdd\u7559\u5927\u5c0f\u5199\u3002"}
+]},
+{id:"translation",title:"\u7ffb\u8bd1",intro:"\u591a\u8bed\u8a00\u5de5\u4f5c\u6d41\uff0c\u7ba1\u7406\u6bcf\u4e2a\u6c14\u6ce1\u7684\u7ffb\u8bd1\u3002",items:[
+{h:"\u7ffb\u8bd1\u9762\u677f",c:"<b>\u6587\u4ef6 \u2192 \u7ffb\u8bd1</b>(<kbd>Ctrl+Shift+T</kbd>)\u3002\u6dfb\u52a0\u76ee\u6807\u8bed\u8a00\u3002"},
+{h:"\u7ffb\u8bd1",c:"\u9009\u62e9\u6c14\u6ce1\u5e76\u8f93\u5165\u5f53\u524d\u8bed\u8a00\u7684\u7ffb\u8bd1\u3002"},
+{h:"\u5207\u6362\u8bed\u8a00",c:"\u66f4\u6539\u6d3b\u52a8\u8bed\u8a00\u4ee5\u5728\u753b\u5e03\u4e0a\u67e5\u770b\u7ffb\u8bd1\u3002"},
+{h:"\u5bfc\u51fa",c:"\u6309\u8bed\u8a00\u5bfc\u51fa\uff0c\u4f7f\u7528\u5355\u72ec\u6587\u4ef6\u5939\u6216\u6587\u4ef6\u540d\u4e2d\u7684\u8bed\u8a00\u4ee3\u7801\u3002"}
+]},
+{id:"guides",title:"\u53c2\u8003\u7ebf\u4e0e\u5bf9\u9f50",intro:"\u53c2\u8003\u7ebf\u3001\u7f51\u683c\u548c\u5bf9\u9f50\u5de5\u5177\u3002",items:[
+{h:"\u6dfb\u52a0\u53c2\u8003\u7ebf",c:"\u6c34\u5e73\uff1a<kbd>Ctrl+Alt+H</kbd>\u3002\u5782\u76f4\uff1a<kbd>Ctrl+Alt+V</kbd>\u3002"},
+{h:"\u5438\u9644",c:"<b>\u5438\u9644\u5230\u53c2\u8003\u7ebf</b>\u548c<b>\u5438\u9644\u5230\u7f51\u683c</b>(<kbd>Ctrl+Shift+G</kbd>)\u3002"},
+{h:"\u7f51\u683c",c:"<kbd>Ctrl+G</kbd> \u663e\u793a/\u9690\u85cf\u3002\u5728<b>\u9996\u9009\u9879 \u2192 \u753b\u5e03</b>\u4e2d\u81ea\u5b9a\u4e49\u3002"},
+{h:"\u5bf9\u9f50\u548c\u5206\u5e03",c:"<b>\u7f16\u8f91 \u2192 \u5bf9\u9f50</b>\u548c<b>\u7f16\u8f91 \u2192 \u5206\u5e03</b>\u3002"},
+{h:"\u9501\u5b9a\u53c2\u8003\u7ebf",c:"\u9632\u6b62\u610f\u5916\u79fb\u52a8\u53c2\u8003\u7ebf\u3002"}
+]},
+{id:"export",title:"\u5bfc\u51fa",intro:"\u5c06\u9875\u9762\u5bfc\u51fa\u4e3a\u5404\u79cd\u683c\u5f0f\u3002",items:[
+{h:"\u6253\u5f00",c:"<b>\u6587\u4ef6 \u2192 \u5bfc\u51fa</b>(<kbd>Ctrl+Shift+E</kbd>)\u3002"},
+{h:"DPI \u548c\u8d28\u91cf",c:"\u5206\u8fa8\u7387(DPI)\u548c\u8d28\u91cf(1\u2013100%)\u3002"},
+{h:"\u9009\u9879",c:"\u900f\u660e\u80cc\u666f\u3001\u4ec5\u53e0\u52a0\u3001\u5206\u955c\u8fb9\u6846\u3001\u5143\u6570\u636e\u3002"},
+{h:"\u8303\u56f4",c:"\u5f53\u524d\u9875\u6216\u6240\u6709\u9875\u3002\u53ef\u89c1\u56fe\u5c42\u6216\u4ec5\u9009\u62e9\u3002"},
+{h:"\u7ffb\u8bd1",c:"\u6309\u8bed\u8a00\u5bfc\u51fa\uff0c\u4f7f\u7528\u6587\u4ef6\u5939\u6216\u6587\u4ef6\u540d\u4ee3\u7801\u3002"},
+{h:"\u6587\u4ef6\u540d\u6a21\u5f0f",c:"\u4f7f\u7528 <code>{document}-page-{page}</code> \u7b49\u6a21\u5f0f\u3002"}
+]},
+
+{id:"preferences",title:"\u9996\u9009\u9879",intro:"\u6839\u636e\u5de5\u4f5c\u6d41\u81ea\u5b9a\u4e49 Letterist\u3002",items:[
+{h:"\u6253\u5f00",c:"<b>\u6587\u4ef6 \u2192 \u9996\u9009\u9879</b>(<kbd>Ctrl+,</kbd>)\u3002"},
+{h:"\u5e38\u89c4",c:"\u8bed\u8a00\u3001\u9875\u9762\u5c3a\u5bf8\u3001DPI\u3001\u81ea\u52a8\u4fdd\u5b58\u3001\u6700\u8fd1\u6587\u4ef6\u3002"},
+{h:"\u5355\u4f4d",c:"\u50cf\u7d20\u3001\u82f1\u5bf8\u3001\u5398\u7c73\u3001\u6beb\u7c73\u3001\u78c5\u6216\u6d3e\u5361\u3002\u6807\u5c3a\u3002"},
+{h:"\u753b\u5e03",c:"\u80cc\u666f\u8272\u3001\u7f51\u683c\u3001\u63a7\u5236\u67c4\u3001\u7f29\u653e\u3001\u6eda\u52a8\u901f\u5ea6\u3002"},
+{h:"\u5bfc\u51fa",c:"\u9ed8\u8ba4\u683c\u5f0f\u3001DPI\u3001\u8d28\u91cf\u3001\u6587\u4ef6\u5939\u548c\u6587\u4ef6\u540d\u3002"},
+{h:"\u6027\u80fd",c:"\u64a4\u9500\u9650\u5236\u3001\u7f29\u7565\u56fe\u7f13\u5b58\u3001\u786c\u4ef6\u52a0\u901f\u3001\u5185\u5b58\u3002"},
+{h:"\u5feb\u6377\u952e",c:"\u81ea\u5b9a\u4e49\u6240\u6709\u5feb\u6377\u952e\u3002"},
+{h:"\u5bfc\u5165/\u5bfc\u51fa",c:"\u4fdd\u5b58\u6216\u6062\u590d\u9996\u9009\u9879\u3002"}
+]}
+]
+},
+"ja":{
+title:"Letterist \u30d8\u30eb\u30d7\u30ac\u30a4\u30c9",
+subtitle:"Letterist \u306e\u5168\u6a5f\u80fd\u306e\u5b8c\u5168\u30ea\u30d5\u30a1\u30ec\u30f3\u30b9",
+tocTitle:"\u76ee\u6b21",
+quickText:"\u30af\u30a4\u30c3\u30af\u30ac\u30a4\u30c9\u3092\u304a\u63a2\u3057\u3067\u3059\u304b\uff1f",
+quickLink:"\u30af\u30a4\u30c3\u30af\u30b9\u30bf\u30fc\u30c8\u3092\u958b\u304f",
+foot:"\u30d8\u30eb\u30d7\u30a6\u30a3\u30f3\u30c9\u30a6\u4e0a\u90e8\u306e\u691c\u7d22\u30d0\u30fc\u3067\u7279\u5b9a\u306e\u30c8\u30d4\u30c3\u30af\u3092\u691c\u7d22\u3067\u304d\u307e\u3059\u3002",
+sections:[
+{id:"workspace",title:"\u30ef\u30fc\u30af\u30b9\u30da\u30fc\u30b9",intro:"Letterist \u306e\u30ef\u30fc\u30af\u30b9\u30da\u30fc\u30b9\u306f\u4e2d\u592e\u306e\u30ad\u30e3\u30f3\u30d0\u30b9\u3068\u4e21\u5074\u306e\u30c4\u30fc\u30eb\u30d1\u30cd\u30eb\u3067\u69cb\u6210\u3055\u308c\u3066\u3044\u307e\u3059\u3002",items:[
+{h:"\u30ad\u30e3\u30f3\u30d0\u30b9",c:"\u4e2d\u592e\u306e\u7de8\u96c6\u30a8\u30ea\u30a2\u3002<b>\u30d1\u30f3</b>\uff1a\u30b9\u30da\u30fc\u30b9+\u30c9\u30e9\u30c3\u30b0\u307e\u305f\u306f\u30de\u30a6\u30b9\u4e2d\u30dc\u30bf\u30f3\u3002<b>\u30ba\u30fc\u30e0</b>\uff1aCtrl+\u30b9\u30af\u30ed\u30fc\u30eb\u3001<kbd>Ctrl+Plus</kbd>/<kbd>Ctrl+Minus</kbd>\u3002<kbd>Ctrl+0</kbd> \u3067\u753b\u9762\u306b\u5408\u308f\u305b\u308b\u3002"},
+{h:"\u5de6\u30b5\u30a4\u30c9\u30d0\u30fc",c:"4\u3064\u306e\u30bf\u30d6\uff1a<b>\u30da\u30fc\u30b8</b>\u3001<b>\u30ec\u30a4\u30e4\u30fc</b>\u3001<b>\u30d1\u30cd\u30eb</b>\u3001<b>\u30ac\u30a4\u30c9</b>\uff08\u6574\u5217\u30ac\u30a4\u30c9\u3001\u30b0\u30ea\u30c3\u30c9\u3001\u30b9\u30ca\u30c3\u30d7\uff09\u3002"},
+{h:"\u53f3\u30b5\u30a4\u30c9\u30d0\u30fc",c:"\u30d7\u30ed\u30d1\u30c6\u30a3\u30a4\u30f3\u30b9\u30da\u30af\u30bf\u30fc\u3002\u30bf\u30d6\uff1a<b>\u5439\u304d\u51fa\u3057</b>\u3001<b>\u30c6\u30ad\u30b9\u30c8</b>\u3001<b>\u5c3b\u5c3e</b>\u3001<b>\u30a8\u30d5\u30a7\u30af\u30c8</b>\u3002"},
+{h:"\u30c4\u30fc\u30eb\u30d0\u30fc",c:"\u30c4\u30fc\u30eb\u3001\u30d5\u30a1\u30a4\u30eb\u3001\u5c65\u6b74\u3001\u30af\u30ea\u30c3\u30d7\u30dc\u30fc\u30c9\u3001\u30ba\u30fc\u30e0\u3001\u30b9\u30ca\u30c3\u30d7\u3078\u306e\u30af\u30a4\u30c3\u30af\u30a2\u30af\u30bb\u30b9\u3002"},
+{h:"\u30b9\u30c6\u30fc\u30bf\u30b9\u30d0\u30fc",c:"\u30b9\u30c6\u30fc\u30bf\u30b9\u30e1\u30c3\u30bb\u30fc\u30b8\u3001\u30ba\u30fc\u30e0\u30ec\u30d9\u30eb\u3001\u7ffb\u8a33\u8a00\u8a9e\u3002"},
+{h:"\u30d5\u30eb\u30b9\u30af\u30ea\u30fc\u30f3",c:"<kbd>Tab</kbd> \u3067\u30b5\u30a4\u30c9\u30d0\u30fc\u3092\u975e\u8868\u793a\u3002\u518d\u5ea6 <kbd>Tab</kbd> \u3067\u5fa9\u5143\u3002"},
+]},
+{id:"documents",title:"\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u3068\u30da\u30fc\u30b8",intro:"\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u3092\u7ba1\u7406\u3057\u3001\u8907\u6570\u30da\u30fc\u30b8\u306e\u30b3\u30df\u30c3\u30af\u3092\u7de8\u6210\u3057\u307e\u3059\u3002",items:[
+{h:"\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u4f5c\u6210",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u65b0\u898f</b>(<kbd>Ctrl+N</kbd>)\u3002\u30d7\u30ea\u30bb\u30c3\u30c8\u307e\u305f\u306f\u30ab\u30b9\u30bf\u30e0\u30b5\u30a4\u30ba\u3092\u9078\u629e\u3002"},
+{h:"\u958b\u304f\u30fb\u4fdd\u5b58",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u958b\u304f</b>(<kbd>Ctrl+O</kbd>)\u3002\u4fdd\u5b58\uff1a<kbd>Ctrl+S</kbd>\u3002\u5225\u540d\u4fdd\u5b58\uff1a<kbd>Ctrl+Shift+S</kbd>\u3002\u5b9a\u671f\u81ea\u52d5\u4fdd\u5b58\u3002"},
+{h:"\u30da\u30fc\u30b8\u7ba1\u7406",c:"\u8ffd\u52a0\uff1a<kbd>Ctrl+Alt+N</kbd>\u3002<b>\u30da\u30fc\u30b8</b>\u30bf\u30d6\u3067\u79fb\u52d5\u3001\u524a\u9664\u3001\u8907\u88fd\u3001\u4e26\u3079\u66ff\u3048\u3002"},
+{h:"\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u8a2d\u5b9a",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u8a2d\u5b9a</b>\uff1a\u540d\u524d\u3001\u30b5\u30a4\u30ba\u3001DPI\u3001\u5358\u4f4d\u3001\u8aad\u307f\u9806\u3002"}
+]},
+{id:"panels",title:"\u30d1\u30cd\u30eb\u30ec\u30a4\u30a2\u30a6\u30c8",intro:"\u30d1\u30cd\u30eb\u306f\u30b3\u30df\u30c3\u30af\u30da\u30fc\u30b8\u306e\u8996\u89c9\u7684\u69cb\u9020\u3092\u5b9a\u7fa9\u3057\u307e\u3059\u3002",items:[
+{h:"\u30d1\u30cd\u30eb\u30e2\u30fc\u30c9",c:"<kbd>P</kbd> \u3067\u30d1\u30cd\u30eb\u30e2\u30fc\u30c9\u306b\u5165\u308a\u307e\u3059\u3002\u518d\u5ea6 <kbd>P</kbd> \u3067\u623b\u308a\u307e\u3059\u3002"},
+{h:"\u30d1\u30cd\u30eb\u63cf\u753b",c:"\u30c4\u30fc\u30eb\uff1a<b>\u77e9\u5f62</b>\u3001<b>\u89d2\u4e38\u77e9\u5f62</b>\u3001<b>\u6955\u5186</b>\u3001<b>\u30dd\u30ea\u30b4\u30f3</b>\u3001<b>\u30d5\u30ea\u30fc\u30d5\u30a9\u30fc\u30e0</b>\u3002"},
+{h:"\u30d7\u30ed\u30d1\u30c6\u30a3",c:"\u4f4d\u7f6e\u3001\u30b5\u30a4\u30ba\u3001\u89d2\u4e38\u3001\u67a0\u7dda\u306e\u8272/\u5e45/\u30b9\u30bf\u30a4\u30eb\u3001\u5b89\u5168\u30de\u30fc\u30b8\u30f3\u3002"},
+{h:"\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u3068\u8aad\u307f\u9806",c:"<b>\u30da\u30fc\u30b8 \u2192 \u30d1\u30cd\u30eb\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8</b>\u3067\u30ec\u30a4\u30a2\u30a6\u30c8\u3092\u4fdd\u5b58\u3002<b>\u30ac\u30a4\u30c9</b>\u30bf\u30d6\u3067\u8aad\u307f\u9806\u3092\u8a2d\u5b9a\u3002"},
+{h:"\u30ac\u30bf\u30fc",c:"<b>\u30ac\u30a4\u30c9</b>\u30bf\u30d6\u3067\u30d1\u30cd\u30eb\u9593\u306e\u9593\u9694\u3092\u8abf\u6574\u3002"}
+]},
+{id:"balloons",title:"\u5439\u304d\u51fa\u3057",intro:"\u5439\u304d\u51fa\u3057\u306f\u30ec\u30bf\u30ea\u30f3\u30b0\u306e\u4e2d\u6838\u8981\u7d20\u3067\u3001\u30bb\u30ea\u30d5\u3084\u30ca\u30ec\u30fc\u30b7\u30e7\u30f3\u3092\u542b\u307f\u307e\u3059\u3002",items:[
+{h:"\u4f5c\u6210",c:"<kbd>B</kbd> \u3067\u30ad\u30e3\u30f3\u30d0\u30b9\u3092\u30af\u30ea\u30c3\u30af\u3002\u30c0\u30d6\u30eb\u30af\u30ea\u30c3\u30af\u3067\u30c6\u30ad\u30b9\u30c8\u7de8\u96c6\u3002<kbd>S</kbd> \u3067\u67a0\u306a\u3057SFX\u3002"},
+{h:"\u9078\u629e\u3068\u79fb\u52d5",c:"<kbd>V</kbd> \u3067\u9078\u629e\u3002\u30c9\u30e9\u30c3\u30b0\u3067\u79fb\u52d5\u3002<b>Shift+\u30af\u30ea\u30c3\u30af</b>\u3067\u8907\u6570\u9078\u629e\u3002\u77e2\u5370\u30ad\u30fc\u3067 1px \u79fb\u52d5\u3002"},
+{h:"\u30b5\u30a4\u30ba\u3068\u56de\u8ee2",c:"\u89d2\u3092\u30c9\u30e9\u30c3\u30b0\u3067\u30b5\u30a4\u30ba\u5909\u66f4\u3002<b>\u5439\u304d\u51fa\u3057</b>\u30bf\u30d6\u3067\u56de\u8ee2\u89d2\u5ea6\u3092\u8a2d\u5b9a\u3002"},
+{h:"\u5f62\u72b6",c:"<b>\u6955\u5186</b>\u3001<b>\u89d2\u4e38\u77e9\u5f62</b>\u3001<b>\u77e9\u5f62</b>\u3001<b>\u96fb\u5b50</b>\u3001<b>\u601d\u8003\u6ce1</b>\u3001<b>\u30b9\u30d7\u30e9\u30c3\u30c8</b>\u3001<b>\u7206\u767a</b>\u3001<b>\u3055\u3055\u3084\u304d</b>\u3001<b>\u30ab\u30b9\u30bf\u30e0</b>(SVG)\u3001<b>\u306a\u3057</b>\u3002"},
+{h:"\u5857\u308a\u3068\u67a0\u7dda",c:"<b>\u5439\u304d\u51fa\u3057</b>\u30bf\u30d6\u3067\u5857\u308a\u8272\u3068\u67a0\u7dda\u8272\u3092\u8a2d\u5b9a\u3002"},
+{h:"\u30ea\u30f3\u30af",c:"<b>\u30aa\u30d6\u30b8\u30a7\u30af\u30c8 \u2192 \u30ea\u30f3\u30af</b>(<kbd>Ctrl+L</kbd>)\u3002\u89e3\u9664\uff1a<kbd>Ctrl+Shift+L</kbd>\u3002"},
+{h:"\u30b0\u30eb\u30fc\u30d7\u3068\u6574\u5217",c:"\u30b0\u30eb\u30fc\u30d7\uff1a<kbd>Ctrl+G</kbd>\u3002<b>\u7de8\u96c6 \u2192 \u6574\u5217</b>\u3068<b>\u7de8\u96c6 \u2192 \u5206\u5e03</b>\u3002"},
+{h:"\u8868\u793a\u3068\u30ed\u30c3\u30af",c:"\u524a\u9664\u305b\u305a\u306b\u975e\u8868\u793a\u3002\u30ed\u30c3\u30af\u3067\u8aa4\u7de8\u96c6\u3092\u9632\u6b62\u3002"}
+]},
+{id:"text",title:"\u30c6\u30ad\u30b9\u30c8\u3068\u30b9\u30bf\u30a4\u30eb",intro:"\u30d7\u30ed\u306e\u30bf\u30a4\u30dd\u30b0\u30e9\u30d5\u30a3\u5236\u5fa1\u3067\u30bb\u30ea\u30d5\u3092\u6574\u5f62\u3002",items:[
+{h:"\u30c6\u30ad\u30b9\u30c8\u7de8\u96c6",c:"\u5439\u304d\u51fa\u3057\u3092\u30c0\u30d6\u30eb\u30af\u30ea\u30c3\u30af\u3067\u7de8\u96c6\u3002<kbd>Escape</kbd> \u3067\u5b8c\u4e86\u3002"},
+{h:"\u30d5\u30a9\u30f3\u30c8\u9078\u629e",c:"<b>\u30c6\u30ad\u30b9\u30c8</b>\u30bf\u30d6\u306e\u30d5\u30a9\u30f3\u30c8\u540d\u3092\u30af\u30ea\u30c3\u30af\u3067<b>\u30d5\u30a9\u30f3\u30c8\u30c1\u30e5\u30fc\u30b6\u30fc</b>\u3092\u958b\u304d\u307e\u3059\u3002"},
+{h:"\u30b5\u30a4\u30ba\u3001\u8272\u3001\u914d\u7f6e",c:"<b>\u30c6\u30ad\u30b9\u30c8</b>\u30bf\u30d6\u3067\u8abf\u6574\u3002"},
+{h:"\u6587\u5b57\u66f8\u5f0f",c:"<kbd>Ctrl+B</kbd> \u592a\u5b57\u3001<kbd>Ctrl+I</kbd> \u659c\u4f53\u3001<kbd>Ctrl+U</kbd> \u4e0b\u7dda\u3002\u53d6\u308a\u6d88\u3057\u7dda\u3001\u8f2a\u90ed\u3001\u4e0b\u4ed8\u304d\u3001\u4e0a\u4ed8\u304d\u3082\u3002"},
+{h:"\u9593\u9694\u3068\u5927\u6587\u5b57",c:"\u5b57\u9593\uff08\u30c8\u30e9\u30c3\u30ad\u30f3\u30b0\uff09\u3001\u884c\u9ad8\u3001\u5168\u5927\u6587\u5b57\u30e2\u30fc\u30c9\u3002"},
+{h:"\u30c6\u30ad\u30b9\u30c8\u30a8\u30d5\u30a7\u30af\u30c8",c:"<b>\u30a8\u30d5\u30a7\u30af\u30c8</b>\u30bf\u30d6\uff1a\u5f71\u3001\u5149\u5f69\u30013D\u62bc\u3057\u51fa\u3057\u3001\u52d5\u304d\u307c\u304b\u3057\u3002"},
+{h:"\u30b9\u30bf\u30a4\u30eb\u30b3\u30d4\u30fc",c:"<kbd>Ctrl+Alt+C</kbd> \u3067\u30b3\u30d4\u30fc\u3001<kbd>Ctrl+Alt+V</kbd> \u3067\u9069\u7528\u3002"}
+]},
+{id:"tails",title:"\u5c3b\u5c3e",intro:"\u5c3b\u5c3e\u306f\u5439\u304d\u51fa\u3057\u304b\u3089\u8a71\u3057\u3066\u3044\u308b\u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u3092\u6307\u3057\u307e\u3059\u3002",items:[
+{h:"\u8ffd\u52a0",c:"\u5439\u304d\u51fa\u3057\u3092\u9078\u629e\u3057\u3066 <kbd>T</kbd>\u3002\u5148\u7aef\u3092\u8a71\u8005\u306b\u30c9\u30e9\u30c3\u30b0\u3002"},
+{h:"\u30b9\u30bf\u30a4\u30eb",c:"<b>\u30dd\u30a4\u30f3\u30bf\u30fc</b>\u3001<b>\u30ab\u30fc\u30d6</b>\u3001<b>\u601d\u8003\u6ce1</b>\u3001<b>\u6ce2\u7dda</b>\u3001<b>\u306a\u3057</b>\u3002"},
+{h:"\u5e45\u3068\u66f2\u7387",c:"<b>\u5c3b\u5c3e</b>\u30bf\u30d6\u3067\u8abf\u6574\u3002"},
+{h:"\u8907\u6570\u306e\u5c3b\u5c3e",c:"\u4e00\u3064\u306e\u5439\u304d\u51fa\u3057\u306b\u8907\u6570\u306e\u5c3b\u5c3e\u3092\u4ed8\u3051\u3089\u308c\u307e\u3059\u3002"},
+{h:"\u524a\u9664",c:"\u518d\u5ea6 <kbd>T</kbd> \u3067\u524a\u9664\u3002"}
+]},
+{id:"layers",title:"\u30ec\u30a4\u30e4\u30fc",intro:"\u30ec\u30a4\u30e4\u30fc\u306f\u5404\u30da\u30fc\u30b8\u306e\u91cd\u306d\u9806\u3092\u5236\u5fa1\u3057\u307e\u3059\u3002",items:[
+{h:"\u30ec\u30a4\u30e4\u30fc\u30d1\u30cd\u30eb",c:"\u5de6\u30b5\u30a4\u30c9\u30d0\u30fc\u306e<b>\u30ec\u30a4\u30e4\u30fc</b>\u30bf\u30d6\u3002"},
+{h:"\u8ffd\u52a0",c:"<b>\u30da\u30fc\u30b8 \u2192 \u65b0\u898f\u30ec\u30a4\u30e4\u30fc</b>(<kbd>Ctrl+Shift+N</kbd>)\u3002"},
+{h:"\u8868\u793a\u3068\u30ed\u30c3\u30af",c:"\u4e00\u6642\u7684\u306b\u975e\u8868\u793a\u307e\u305f\u306f\u30ed\u30c3\u30af\u3067\u7de8\u96c6\u9632\u6b62\u3002"},
+{h:"\u4e26\u3079\u66ff\u3048",c:"<b>\u30da\u30fc\u30b8 \u2192 \u30ec\u30a4\u30e4\u30fc\u4e0a\u3078/\u4e0b\u3078</b>\u3002"},
+{h:"\u4e0d\u900f\u660e\u5ea6",c:"\u4e0d\u900f\u660e\u5ea6 0\u2013100%\u3002"}
+]},
+{id:"images",title:"\u753b\u50cf",intro:"\u30a2\u30fc\u30c8\u30ef\u30fc\u30af\u3001\u80cc\u666f\u3001\u88c5\u98fe\u753b\u50cf\u3092\u8ffd\u52a0\u3002",items:[
+{h:"\u80cc\u666f\u753b\u50cf",c:"<b>\u30aa\u30d6\u30b8\u30a7\u30af\u30c8 \u2192 \u753b\u50cf\u3092\u958b\u304f</b>(<kbd>Ctrl+Shift+O</kbd>)\u3002\u524a\u9664\uff1a<b>\u30aa\u30d6\u30b8\u30a7\u30af\u30c8 \u2192 \u80cc\u666f\u753b\u50cf\u3092\u30af\u30ea\u30a2</b>\u3002"},
+{h:"\u30d5\u30ed\u30fc\u30c6\u30a3\u30f3\u30b0\u753b\u50cf",c:"<b>\u30aa\u30d6\u30b8\u30a7\u30af\u30c8 \u2192 \u88c5\u98fe\u3092\u30a4\u30f3\u30dd\u30fc\u30c8</b>(<kbd>I</kbd>)\u3002"},
+{h:"\u305d\u306e\u4ed6\u306e\u65b9\u6cd5",c:"URL\u3001\u30af\u30ea\u30c3\u30d7\u30dc\u30fc\u30c9(<kbd>Ctrl+Shift+V</kbd>)\u3001\u4e00\u62ec\u30a4\u30f3\u30dd\u30fc\u30c8\u3001\u30c9\u30e9\u30c3\u30b0\uff06\u30c9\u30ed\u30c3\u30d7\u3002"}
+]},
+{id:"styles",title:"\u30b9\u30bf\u30a4\u30eb\u3068\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8",intro:"\u8a2d\u5b9a\u3092\u4fdd\u5b58\u3057\u3066\u518d\u5229\u7528\u3057\u3001\u4e00\u8cab\u6027\u3092\u4fdd\u3061\u307e\u3059\u3002",items:[
+{h:"\u540d\u524d\u4ed8\u304d\u30b9\u30bf\u30a4\u30eb",c:"\u5916\u89b3\u3092<b>\u540d\u524d\u4ed8\u304d\u30b9\u30bf\u30a4\u30eb</b>\u3068\u3057\u3066\u4fdd\u5b58\u3057\u3001\u4ed6\u306e\u5439\u304d\u51fa\u3057\u306b\u9069\u7528\u3002"},
+{h:"\u30e9\u30a4\u30d6\u30e9\u30ea",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u30b9\u30bf\u30a4\u30eb\u30e9\u30a4\u30d6\u30e9\u30ea</b>\u3067\u30a4\u30f3\u30dd\u30fc\u30c8/\u30a8\u30af\u30b9\u30dd\u30fc\u30c8\u3002"},
+{h:"\u5439\u304d\u51fa\u3057\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8",c:"\u5b8c\u5168\u306a\u8a2d\u5b9a\u3092\u4fdd\u5b58\u3002<kbd>Alt+1</kbd>\uff5e<kbd>Alt+9</kbd> \u306b\u5272\u308a\u5f53\u3066\u3002"},
+{h:"\u30d1\u30cd\u30eb\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8",c:"<b>\u30da\u30fc\u30b8 \u2192 \u30d1\u30cd\u30eb\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8</b>\u3002"}
+]},
+{id:"findreplace",title:"\u691c\u7d22\u3068\u7f6e\u63db",intro:"\u5168\u5439\u304d\u51fa\u3057\u306e\u30c6\u30ad\u30b9\u30c8\u3092\u691c\u7d22\u3002",items:[
+{h:"\u691c\u7d22",c:"<kbd>Ctrl+F</kbd>\u3002\u30c6\u30ad\u30b9\u30c8\u3092\u5165\u529b\u3057\u3066 Enter\u3002"},
+{h:"\u7f6e\u63db",c:"<kbd>Ctrl+H</kbd>\u3002<b>\u7f6e\u63db</b>\u307e\u305f\u306f<b>\u3059\u3079\u3066\u7f6e\u63db</b>\u3002"},
+{h:"\u30aa\u30d7\u30b7\u30e7\u30f3",c:"\u5927\u6587\u5b57\u5c0f\u6587\u5b57\u306e\u533a\u5225\u3001\u691c\u7d22\u7bc4\u56f2\uff08\u5168\u30da\u30fc\u30b8\u3001\u73fe\u5728\u306e\u30da\u30fc\u30b8\u3001\u9078\u629e\uff09\u3001\u5927\u6587\u5b57\u5c0f\u6587\u5b57\u306e\u4fdd\u6301\u3002"}
+]},
+{id:"translation",title:"\u7ffb\u8a33",intro:"\u5439\u304d\u51fa\u3057\u3054\u3068\u306e\u7ffb\u8a33\u3092\u7ba1\u7406\u3059\u308b\u591a\u8a00\u8a9e\u30ef\u30fc\u30af\u30d5\u30ed\u30fc\u3002",items:[
+{h:"\u7ffb\u8a33\u30d1\u30cd\u30eb",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u7ffb\u8a33</b>(<kbd>Ctrl+Shift+T</kbd>)\u3002\u30bf\u30fc\u30b2\u30c3\u30c8\u8a00\u8a9e\u3092\u8ffd\u52a0\u3002"},
+{h:"\u7ffb\u8a33",c:"\u5439\u304d\u51fa\u3057\u3092\u9078\u629e\u3057\u3001\u30a2\u30af\u30c6\u30a3\u30d6\u8a00\u8a9e\u306e\u7ffb\u8a33\u3092\u5165\u529b\u3002"},
+{h:"\u8a00\u8a9e\u5207\u308a\u66ff\u3048",c:"\u30a2\u30af\u30c6\u30a3\u30d6\u8a00\u8a9e\u3092\u5909\u66f4\u3057\u3066\u30ad\u30e3\u30f3\u30d0\u30b9\u4e0a\u3067\u7ffb\u8a33\u3092\u78ba\u8a8d\u3002"},
+{h:"\u30a8\u30af\u30b9\u30dd\u30fc\u30c8",c:"\u8a00\u8a9e\u5225\u306b\u30d5\u30a9\u30eb\u30c0\u30fc\u307e\u305f\u306f\u30d5\u30a1\u30a4\u30eb\u540d\u306e\u8a00\u8a9e\u30b3\u30fc\u30c9\u3067\u30a8\u30af\u30b9\u30dd\u30fc\u30c8\u3002"}
+]},
+{id:"guides",title:"\u30ac\u30a4\u30c9\u3068\u6574\u5217",intro:"\u30ac\u30a4\u30c9\u3001\u30b0\u30ea\u30c3\u30c9\u3001\u6574\u5217\u30c4\u30fc\u30eb\u3067\u6b63\u78ba\u306b\u914d\u7f6e\u3002",items:[
+{h:"\u30ac\u30a4\u30c9\u8ffd\u52a0",c:"\u6c34\u5e73\uff1a<kbd>Ctrl+Alt+H</kbd>\u3002\u5782\u76f4\uff1a<kbd>Ctrl+Alt+V</kbd>\u3002"},
+{h:"\u30b9\u30ca\u30c3\u30d7",c:"<b>\u30ac\u30a4\u30c9\u306b\u30b9\u30ca\u30c3\u30d7</b>\u3068<b>\u30b0\u30ea\u30c3\u30c9\u306b\u30b9\u30ca\u30c3\u30d7</b>(<kbd>Ctrl+Shift+G</kbd>)\u3002"},
+{h:"\u30b0\u30ea\u30c3\u30c9",c:"<kbd>Ctrl+G</kbd> \u3067\u8868\u793a/\u975e\u8868\u793a\u3002<b>\u74b0\u5883\u8a2d\u5b9a \u2192 \u30ad\u30e3\u30f3\u30d0\u30b9</b>\u3067\u30ab\u30b9\u30bf\u30de\u30a4\u30ba\u3002"},
+{h:"\u6574\u5217\u3068\u5206\u5e03",c:"<b>\u7de8\u96c6 \u2192 \u6574\u5217</b>\u3068<b>\u7de8\u96c6 \u2192 \u5206\u5e03</b>\u3002"},
+{h:"\u30ac\u30a4\u30c9\u30ed\u30c3\u30af",c:"\u8aa4\u79fb\u52d5\u3092\u9632\u6b62\u3002"}
+]},
+{id:"export",title:"\u66f8\u304d\u51fa\u3057",intro:"\u30da\u30fc\u30b8\u3092\u5404\u7a2e\u5f62\u5f0f\u3067\u66f8\u304d\u51fa\u3057\u3002",items:[
+{h:"\u958b\u304f",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u66f8\u304d\u51fa\u3057</b>(<kbd>Ctrl+Shift+E</kbd>)\u3002"},
+{h:"DPI \u3068\u54c1\u8cea",c:"\u89e3\u50cf\u5ea6(DPI)\u3068\u54c1\u8cea(1\u2013100%)\u3002"},
+{h:"\u30aa\u30d7\u30b7\u30e7\u30f3",c:"\u900f\u660e\u80cc\u666f\u3001\u30aa\u30fc\u30d0\u30fc\u30ec\u30a4\u306e\u307f\u3001\u30d1\u30cd\u30eb\u67a0\u3001\u30e1\u30bf\u30c7\u30fc\u30bf\u3002"},
+{h:"\u7bc4\u56f2",c:"\u73fe\u5728\u306e\u30da\u30fc\u30b8\u307e\u305f\u306f\u5168\u30da\u30fc\u30b8\u3002\u8868\u793a\u30ec\u30a4\u30e4\u30fc\u307e\u305f\u306f\u9078\u629e\u306e\u307f\u3002"},
+{h:"\u7ffb\u8a33",c:"\u8a00\u8a9e\u5225\u306b\u30d5\u30a9\u30eb\u30c0\u30fc\u307e\u305f\u306f\u30d5\u30a1\u30a4\u30eb\u540d\u30b3\u30fc\u30c9\u3067\u66f8\u304d\u51fa\u3057\u3002"},
+{h:"\u30d5\u30a1\u30a4\u30eb\u540d\u30d1\u30bf\u30fc\u30f3",c:"<code>{document}-page-{page}</code> \u306a\u3069\u306e\u30d1\u30bf\u30fc\u30f3\u3092\u4f7f\u7528\u3002"}
+]},
+
+{id:"preferences",title:"\u74b0\u5883\u8a2d\u5b9a",intro:"Letterist \u3092\u30ef\u30fc\u30af\u30d5\u30ed\u30fc\u306b\u5408\u308f\u305b\u3066\u30ab\u30b9\u30bf\u30de\u30a4\u30ba\u3002",items:[
+{h:"\u958b\u304f",c:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u74b0\u5883\u8a2d\u5b9a</b>(<kbd>Ctrl+,</kbd>)\u3002"},
+{h:"\u4e00\u822c",c:"\u8a00\u8a9e\u3001\u30da\u30fc\u30b8\u30b5\u30a4\u30ba\u3001DPI\u3001\u81ea\u52d5\u4fdd\u5b58\u3001\u6700\u8fd1\u306e\u30d5\u30a1\u30a4\u30eb\u3002"},
+{h:"\u5358\u4f4d",c:"\u30d4\u30af\u30bb\u30eb\u3001\u30a4\u30f3\u30c1\u3001\u30bb\u30f3\u30c1\u3001\u30df\u30ea\u3001\u30dd\u30a4\u30f3\u30c8\u3001\u30d1\u30a4\u30ab\u3002\u5b9a\u898f\u3002"},
+{h:"\u30ad\u30e3\u30f3\u30d0\u30b9",c:"\u80cc\u666f\u8272\u3001\u30b0\u30ea\u30c3\u30c9\u3001\u30cf\u30f3\u30c9\u30eb\u3001\u30ba\u30fc\u30e0\u3001\u30b9\u30af\u30ed\u30fc\u30eb\u901f\u5ea6\u3002"},
+{h:"\u66f8\u304d\u51fa\u3057",c:"\u30c7\u30d5\u30a9\u30eb\u30c8\u5f62\u5f0f\u3001DPI\u3001\u54c1\u8cea\u3001\u30d5\u30a9\u30eb\u30c0\u30fc\u3001\u30d5\u30a1\u30a4\u30eb\u540d\u3002"},
+{h:"\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9",c:"Undo\u5c65\u6b74\u3001\u30b5\u30e0\u30cd\u30a4\u30eb\u30ad\u30e3\u30c3\u30b7\u30e5\u3001\u30cf\u30fc\u30c9\u30a6\u30a7\u30a2\u30a2\u30af\u30bb\u30e9\u30ec\u30fc\u30b7\u30e7\u30f3\u3001\u30e1\u30e2\u30ea\u3002"},
+{h:"\u30b7\u30e7\u30fc\u30c8\u30ab\u30c3\u30c8",c:"\u3059\u3079\u3066\u306e\u30b7\u30e7\u30fc\u30c8\u30ab\u30c3\u30c8\u3092\u30ab\u30b9\u30bf\u30de\u30a4\u30ba\u3002"},
+{h:"\u30a4\u30f3\u30dd\u30fc\u30c8/\u30a8\u30af\u30b9\u30dd\u30fc\u30c8",c:"\u8a2d\u5b9a\u3092\u4fdd\u5b58\u307e\u305f\u306f\u5fa9\u5143\u3002"}
+]}
+]
+},
+"ko":{
+title:"Letterist \ub3c4\uc6c0\ub9d0 \uac00\uc774\ub4dc",
+subtitle:"Letterist\uc758 \ubaa8\ub4e0 \uae30\ub2a5\uc5d0 \ub300\ud55c \uc644\uc804\ud55c \ucc38\uc870",
+tocTitle:"\ubaa9\ucc28",
+quickText:"\ube60\ub978 \uc548\ub0b4\ub97c \ucc3e\uace0 \uacc4\uc2e0\uac00\uc694? \ube60\ub978 \uc2dc\uc791 \uac00\uc774\ub4dc\ub97c \uc0ac\uc6a9\ud574 \ubcf4\uc138\uc694.",
+quickLink:"\ube60\ub978 \uc2dc\uc791 \uc5f4\uae30",
+foot:"\ub3c4\uc6c0\ub9d0 \ucc3d \uc0c1\ub2e8\uc758 \uac80\uc0c9\ubc14\ub85c \ud2b9\uc815 \uc8fc\uc81c\ub97c \ucc3e\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.",
+sections:[
+{id:"workspace",title:"\uc791\uc5c5 \uacf5\uac04",intro:"Letterist\uc758 \uc791\uc5c5 \uacf5\uac04\uc740 \uc911\uc559 \uce94\ubc84\uc2a4\uc640 \uc591\ucabd \ub3c4\uad6c \ud328\ub110\ub85c \uad6c\uc131\ub429\ub2c8\ub2e4.",items:[
+{h:"\uce94\ubc84\uc2a4",c:"\uc911\uc559 \ud3b8\uc9d1 \uc601\uc5ed. <b>\ud328\ub2dd</b>: \uc2a4\ud398\uc774\uc2a4+\ub4dc\ub798\uadf8 \ub610\ub294 \ub9c8\uc6b0\uc2a4 \uc911\uac04 \ubc84\ud2bc. <b>\ud655\ub300/\ucd95\uc18c</b>: Ctrl+\uc2a4\ud06c\ub864, <kbd>Ctrl+Plus</kbd>/<kbd>Ctrl+Minus</kbd>. <kbd>Ctrl+0</kbd> \ud654\uba74 \ub9de\ucda4."},
+{h:"\uc67c\ucabd \uc0ac\uc774\ub4dc\ubc14",c:"4\uac1c \ud0ed: <b>\ud398\uc774\uc9c0</b>, <b>\ub808\uc774\uc5b4</b>, <b>\ud328\ub110</b>, <b>\uac00\uc774\ub4dc</b>(\uc815\ub82c \uac00\uc774\ub4dc, \uadf8\ub9ac\ub4dc, \uc2a4\ub0c5)."},
+{h:"\uc624\ub978\ucabd \uc0ac\uc774\ub4dc\ubc14",c:"\uc18d\uc131 \uc778\uc2a4\ud399\ud130. \ud0ed: <b>\ub9d0\ud48d\uc120</b>, <b>\ud14d\uc2a4\ud2b8</b>, <b>\uaf2c\ub9ac</b>, <b>\ud6a8\uacfc</b>."},
+{h:"\ud234\ubc14",c:"\ub3c4\uad6c, \ud30c\uc77c, \uae30\ub85d, \ud074\ub9bd\ubcf4\ub4dc, \ud655\ub300/\ucd95\uc18c, \uc2a4\ub0c5\uc5d0 \ube60\ub974\uac8c \uc811\uadfc."},
+{h:"\uc0c1\ud0dc \ud45c\uc2dc\uc904",c:"\uc0c1\ud0dc \uba54\uc2dc\uc9c0, \ud655\ub300/\ucd95\uc18c \uc218\uc900, \ubc88\uc5ed \uc5b8\uc5b4."},
+{h:"\uc804\uccb4 \ud654\uba74",c:"<kbd>Tab</kbd>\uc73c\ub85c \uc0ac\uc774\ub4dc\ubc14 \uc228\uae30\uae30. \ub2e4\uc2dc <kbd>Tab</kbd>\uc73c\ub85c \ubcf5\uc6d0."},
+]},
+{id:"documents",title:"\ubb38\uc11c \ubc0f \ud398\uc774\uc9c0",intro:"\ud504\ub85c\uc81d\ud2b8\ub97c \uad00\ub9ac\ud558\uace0 \ub2e4\uc911 \ud398\uc774\uc9c0 \ub9cc\ud654\ub97c \uad6c\uc131\ud569\ub2c8\ub2e4.",items:[
+{h:"\ubb38\uc11c \ub9cc\ub4e4\uae30",c:"<b>\ud30c\uc77c \u2192 \uc0c8 \ubb38\uc11c</b>(<kbd>Ctrl+N</kbd>). \ud504\ub9ac\uc14b \ub610\ub294 \uc0ac\uc6a9\uc790 \uc815\uc758 \ud06c\uae30 \uc120\ud0dd."},
+{h:"\uc5f4\uae30 \ubc0f \uc800\uc7a5",c:"<b>\ud30c\uc77c \u2192 \uc5f4\uae30</b>(<kbd>Ctrl+O</kbd>). \uc800\uc7a5: <kbd>Ctrl+S</kbd>. \ub2e4\ub978 \uc774\ub984\uc73c\ub85c: <kbd>Ctrl+Shift+S</kbd>. \uc790\ub3d9 \uc800\uc7a5."},
+{h:"\ud398\uc774\uc9c0 \uad00\ub9ac",c:"\ucd94\uac00: <kbd>Ctrl+Alt+N</kbd>. <b>\ud398\uc774\uc9c0</b> \ud0ed\uc5d0\uc11c \uc774\ub3d9, \uc0ad\uc81c, \ubcf5\uc81c, \uc7ac\uc815\ub82c."},
+{h:"\ubb38\uc11c \uc124\uc815",c:"<b>\ud30c\uc77c \u2192 \uc124\uc815</b>: \uc774\ub984, \ud06c\uae30, DPI, \ub2e8\uc704, \uc77d\uae30 \ubc29\ud5a5."}
+]},
+{id:"panels",title:"\ud328\ub110 \ub808\uc774\uc544\uc6c3",intro:"\ud328\ub110\uc740 \ub9cc\ud654 \ud398\uc774\uc9c0\uc758 \uc2dc\uac01\uc801 \uad6c\uc870\ub97c \uc815\uc758\ud569\ub2c8\ub2e4.",items:[
+{h:"\ud328\ub110 \ubaa8\ub4dc",c:"<kbd>P</kbd>\ub85c \ud328\ub110 \ubaa8\ub4dc \uc9c4\uc785. \ub2e4\uc2dc <kbd>P</kbd>\ub85c \ubcf5\uadc0."},
+{h:"\ud328\ub110 \uadf8\ub9ac\uae30",c:"\ub3c4\uad6c: <b>\uc0ac\uac01\ud615</b>, <b>\ub465\uadfc \uc0ac\uac01\ud615</b>, <b>\ud0c0\uc6d0</b>, <b>\ub2e4\uac01\ud615</b>, <b>\uc790\uc720 \ud615\ud0dc</b>."},
+{h:"\uc18d\uc131",c:"\uc704\uce58, \ud06c\uae30, \ubaa8\uc11c\ub9ac \ubc18\uacbd, \ud14c\ub450\ub9ac \uc0c9\uc0c1/\ub450\uaed8/\uc2a4\ud0c0\uc77c, \uc548\uc804 \uc5ec\ubc31."},
+{h:"\ud15c\ud50c\ub9bf \ubc0f \uc77d\uae30 \uc21c\uc11c",c:"<b>\ud398\uc774\uc9c0 \u2192 \ud328\ub110 \ud15c\ud50c\ub9bf</b>\uc73c\ub85c \ub808\uc774\uc544\uc6c3 \uc800\uc7a5. <b>\uac00\uc774\ub4dc</b> \ud0ed\uc5d0\uc11c \uc77d\uae30 \ubc29\ud5a5 \uc124\uc815."},
+{h:"\uac04\uaca9",c:"<b>\uac00\uc774\ub4dc</b> \ud0ed\uc5d0\uc11c \ud328\ub110 \uac04\uaca9 \uc870\uc815."}
+]},
+{id:"balloons",title:"\ub9d0\ud48d\uc120",intro:"\ub9d0\ud48d\uc120\uc740 \ub808\ud130\ub9c1\uc758 \ud575\uc2ec \uc694\uc18c\ub85c \ub300\uc0ac\uc640 \ub0b4\ub808\uc774\uc158\uc744 \ub2f4\uc2b5\ub2c8\ub2e4.",items:[
+{h:"\ub9cc\ub4e4\uae30",c:"<kbd>B</kbd> \ud6c4 \uce94\ubc84\uc2a4 \ud074\ub9ad. \ub354\ube14\ud074\ub9ad\uc73c\ub85c \ud14d\uc2a4\ud2b8 \ud3b8\uc9d1. <kbd>S</kbd>\ub85c \ud14c\ub450\ub9ac \uc5c6\ub294 SFX."},
+{h:"\uc120\ud0dd \ubc0f \uc774\ub3d9",c:"<kbd>V</kbd>\ub85c \uc120\ud0dd. \ub4dc\ub798\uadf8\ub85c \uc774\ub3d9. <b>Shift+\ud074\ub9ad</b>\uc73c\ub85c \ub2e4\uc911 \uc120\ud0dd. \ud654\uc0b4\ud45c\ub85c 1px \uc774\ub3d9."},
+{h:"\ud06c\uae30 \ubc0f \ud68c\uc804",c:"\ubaa8\uc11c\ub9ac \ub4dc\ub798\uadf8\ub85c \ud06c\uae30 \uc870\uc815. <b>\ub9d0\ud48d\uc120</b> \ud0ed\uc5d0\uc11c \ud68c\uc804 \uac01\ub3c4 \uc124\uc815."},
+{h:"\ubaa8\uc591",c:"<b>\ud0c0\uc6d0</b>, <b>\ub465\uadfc \uc0ac\uac01\ud615</b>, <b>\uc0ac\uac01\ud615</b>, <b>\uc804\uc790</b>, <b>\uc0dd\uac01 \ud48d\uc120</b>, <b>\uc2a4\ud50c\ub7ab</b>, <b>\ud3ed\ubc1c</b>, <b>\uc18d\uc0ad\uc784</b>, <b>\uc0ac\uc6a9\uc790 \uc815\uc758</b>(SVG), <b>\uc5c6\uc74c</b>."},
+{h:"\ucc44\uc6b0\uae30 \ubc0f \ud14c\ub450\ub9ac",c:"<b>\ub9d0\ud48d\uc120</b> \ud0ed\uc5d0\uc11c \ucc44\uc6b0\uae30 \uc0c9\uacfc \ud14c\ub450\ub9ac \uc0c9 \uc124\uc815."},
+{h:"\uc5f0\uacb0",c:"<b>\uac1d\uccb4 \u2192 \uc5f0\uacb0</b>(<kbd>Ctrl+L</kbd>). \ud574\uc81c: <kbd>Ctrl+Shift+L</kbd>."},
+{h:"\uadf8\ub8f9 \ubc0f \uc815\ub82c",c:"\uadf8\ub8f9: <kbd>Ctrl+G</kbd>. <b>\ud3b8\uc9d1 \u2192 \uc815\ub82c</b> \ubc0f <b>\ud3b8\uc9d1 \u2192 \ubd84\ubc30</b>."},
+{h:"\ud45c\uc2dc \ubc0f \uc7a0\uae08",c:"\uc0ad\uc81c \uc5c6\uc774 \uc228\uae30\uae30. \uc7a0\uae08\uc73c\ub85c \uc2e4\uc218 \ud3b8\uc9d1 \ubc29\uc9c0."}
+]},
+{id:"text",title:"\ud14d\uc2a4\ud2b8 \ubc0f \uc2a4\ud0c0\uc77c",intro:"\uc804\ubb38 \ud0c0\uc774\ud3ec\uadf8\ub798\ud53c \ucee8\ud2b8\ub864\ub85c \ub300\uc0ac\ub97c \ud3ec\ub9f7\ud569\ub2c8\ub2e4.",items:[
+{h:"\ud14d\uc2a4\ud2b8 \ud3b8\uc9d1",c:"\ub9d0\ud48d\uc120\uc744 \ub354\ube14\ud074\ub9ad\ud558\uc5ec \ud3b8\uc9d1. <kbd>Escape</kbd>\ub85c \uc644\ub8cc."},
+{h:"\uae00\uaf34 \uc120\ud0dd",c:"<b>\ud14d\uc2a4\ud2b8</b> \ud0ed\uc758 \uae00\uaf34 \uc774\ub984\uc744 \ud074\ub9ad\ud558\uc5ec <b>\uae00\uaf34 \uc120\ud0dd\uae30</b> \uc5f4\uae30."},
+{h:"\ud06c\uae30, \uc0c9\uc0c1, \uc815\ub82c",c:"<b>\ud14d\uc2a4\ud2b8</b> \ud0ed\uc5d0\uc11c \uc870\uc815."},
+{h:"\ubb38\uc790 \uc11c\uc2dd",c:"<kbd>Ctrl+B</kbd> \uad75\uac8c, <kbd>Ctrl+I</kbd> \uae30\uc6b8\uc784, <kbd>Ctrl+U</kbd> \ubc11\uc904. \ucde8\uc18c\uc120, \uc724\uacfd, \uc544\ub798 \ucca8\uc790, \uc704 \ucca8\uc790\ub3c4."},
+{h:"\uac04\uaca9 \ubc0f \ub300\ubb38\uc790",c:"\uc790\uac04(tracking), \uc904 \ub192\uc774, \uc804\uccb4 \ub300\ubb38\uc790 \ubaa8\ub4dc."},
+{h:"\ud14d\uc2a4\ud2b8 \ud6a8\uacfc",c:"<b>\ud6a8\uacfc</b> \ud0ed: \uadf8\ub9bc\uc790, \ubc1c\uad11, 3D \ub3cc\ucd9c, \ubaa8\uc158 \ube14\ub7ec."},
+{h:"\uc2a4\ud0c0\uc77c \ubcf5\uc0ac/\ubd99\uc5ec\ub123\uae30",c:"<kbd>Ctrl+Alt+C</kbd>\ub85c \ubcf5\uc0ac, <kbd>Ctrl+Alt+V</kbd>\ub85c \uc801\uc6a9."}
+]},
+{id:"tails",title:"\uaf2c\ub9ac",intro:"\uaf2c\ub9ac\ub294 \ub9d0\ud48d\uc120\uc5d0\uc11c \ub9d0\ud558\ub294 \uce90\ub9ad\ud130\ub97c \uac00\ub9ac\ud0b5\ub2c8\ub2e4.",items:[
+{h:"\ucd94\uac00",c:"\ub9d0\ud48d\uc120\uc744 \uc120\ud0dd\ud558\uace0 <kbd>T</kbd>. \ub05d\uc744 \ud654\uc790\ucabd\uc73c\ub85c \ub4dc\ub798\uadf8."},
+{h:"\uc2a4\ud0c0\uc77c",c:"<b>\ud3ec\uc778\ud130</b>, <b>\uace1\uc120</b>, <b>\uc0dd\uac01 \ubc29\uc6b8</b>, <b>\ubb3c\uacb0</b>, <b>\uc5c6\uc74c</b>."},
+{h:"\ub108\ube44 \ubc0f \uace1\ub960",c:"<b>\uaf2c\ub9ac</b> \ud0ed\uc5d0\uc11c \uc870\uc815."},
+{h:"\uc5ec\ub7ec \uaf2c\ub9ac",c:"\ud558\ub098\uc758 \ub9d0\ud48d\uc120\uc5d0 \uc5ec\ub7ec \uaf2c\ub9ac\ub97c \ubd99\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4."},
+{h:"\uc81c\uac70",c:"\ub2e4\uc2dc <kbd>T</kbd>\ub97c \ub20c\ub7ec \uc81c\uac70."}
+]},
+{id:"layers",title:"\ub808\uc774\uc5b4",intro:"\ub808\uc774\uc5b4\ub294 \uac01 \ud398\uc774\uc9c0\uc758 \uc313\uc784 \uc21c\uc11c\ub97c \uc81c\uc5b4\ud569\ub2c8\ub2e4.",items:[
+{h:"\ub808\uc774\uc5b4 \ud328\ub110",c:"\uc67c\ucabd \uc0ac\uc774\ub4dc\ubc14\uc758 <b>\ub808\uc774\uc5b4</b> \ud0ed."},
+{h:"\ucd94\uac00",c:"<b>\ud398\uc774\uc9c0 \u2192 \uc0c8 \ub808\uc774\uc5b4</b>(<kbd>Ctrl+Shift+N</kbd>)."},
+{h:"\ud45c\uc2dc \ubc0f \uc7a0\uae08",c:"\uc784\uc2dc \uc228\uae30\uae30 \ub610\ub294 \uc7a0\uae08\uc73c\ub85c \ud3b8\uc9d1 \ubc29\uc9c0."},
+{h:"\uc7ac\uc815\ub82c",c:"<b>\ud398\uc774\uc9c0 \u2192 \ub808\uc774\uc5b4 \uc704\ub85c/\uc544\ub798\ub85c</b>."},
+{h:"\ubd88\ud22c\uba85\ub3c4",c:"\ubd88\ud22c\uba85\ub3c4 0\u2013100%."}
+]},
+{id:"images",title:"\uc774\ubbf8\uc9c0",intro:"\uc544\ud2b8\uc6cc\ud06c, \ubc30\uacbd, \uc7a5\uc2dd \uc774\ubbf8\uc9c0\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4.",items:[
+{h:"\ubc30\uacbd \uc774\ubbf8\uc9c0",c:"<b>\uac1d\uccb4 \u2192 \uc774\ubbf8\uc9c0 \uc5f4\uae30</b>(<kbd>Ctrl+Shift+O</kbd>). \uc81c\uac70: <b>\uac1d\uccb4 \u2192 \ubc30\uacbd \uc774\ubbf8\uc9c0 \uc9c0\uc6b0\uae30</b>."},
+{h:"\ud50c\ub85c\ud305 \uc774\ubbf8\uc9c0",c:"<b>\uac1d\uccb4 \u2192 \uc7a5\uc2dd \uac00\uc838\uc624\uae30</b>(<kbd>I</kbd>)."},
+{h:"\uae30\ud0c0 \ubc29\ubc95",c:"URL, \ud074\ub9bd\ubcf4\ub4dc(<kbd>Ctrl+Shift+V</kbd>), \uc77c\uad04 \uac00\uc838\uc624\uae30, \ub4dc\ub798\uadf8 \uc564 \ub4dc\ub86d."}
+]},
+{id:"styles",title:"\uc2a4\ud0c0\uc77c \ubc0f \ud15c\ud50c\ub9bf",intro:"\uc124\uc815\uc744 \uc800\uc7a5\ud558\uace0 \uc7ac\uc0ac\uc6a9\ud558\uc5ec \uc77c\uad00\uc131\uc744 \uc720\uc9c0\ud569\ub2c8\ub2e4.",items:[
+{h:"\uc774\ub984 \uc788\ub294 \uc2a4\ud0c0\uc77c",c:"\uc678\uad00\uc744 <b>\uc774\ub984 \uc788\ub294 \uc2a4\ud0c0\uc77c</b>\ub85c \uc800\uc7a5\ud558\uace0 \ub2e4\ub978 \ub9d0\ud48d\uc120\uc5d0 \uc801\uc6a9."},
+{h:"\ub77c\uc774\ube0c\ub7ec\ub9ac",c:"<b>\ud30c\uc77c \u2192 \uc2a4\ud0c0\uc77c \ub77c\uc774\ube0c\ub7ec\ub9ac</b>\ub85c \uac00\uc838\uc624\uae30/\ub0b4\ubcf4\ub0b4\uae30."},
+{h:"\ub9d0\ud48d\uc120 \ud15c\ud50c\ub9bf",c:"\uc644\uc804\ud55c \uc124\uc815 \uc800\uc7a5. <kbd>Alt+1</kbd>~<kbd>Alt+9</kbd> \ub2e8\ucd95\ud0a4 \ud560\ub2f9."},
+{h:"\ud328\ub110 \ud15c\ud50c\ub9bf",c:"<b>\ud398\uc774\uc9c0 \u2192 \ud328\ub110 \ud15c\ud50c\ub9bf</b>."}
+]},
+{id:"findreplace",title:"\ucc3e\uae30 \ubc0f \ubc14\uafb8\uae30",intro:"\ubaa8\ub4e0 \ub9d0\ud48d\uc120\uc758 \ud14d\uc2a4\ud2b8\ub97c \uac80\uc0c9\ud569\ub2c8\ub2e4.",items:[
+{h:"\ucc3e\uae30",c:"<kbd>Ctrl+F</kbd>. \ud14d\uc2a4\ud2b8 \uc785\ub825 \ud6c4 Enter."},
+{h:"\ubc14\uafb8\uae30",c:"<kbd>Ctrl+H</kbd>. <b>\ubc14\uafb8\uae30</b> \ub610\ub294 <b>\ubaa8\ub450 \ubc14\uafb8\uae30</b>."},
+{h:"\uc635\uc158",c:"\ub300\uc18c\ubb38\uc790 \uad6c\ubd84, \uac80\uc0c9 \ubc94\uc704(\ubaa8\ub4e0 \ud398\uc774\uc9c0, \ud604\uc7ac \ud398\uc774\uc9c0, \uc120\ud0dd), \ub300\uc18c\ubb38\uc790 \uc720\uc9c0."}
+]},
+{id:"translation",title:"\ubc88\uc5ed",intro:"\ub9d0\ud48d\uc120\ubcc4 \ubc88\uc5ed\uc744 \uad00\ub9ac\ud558\ub294 \ub2e4\uad6d\uc5b4 \uc6cc\ud06c\ud50c\ub85c.",items:[
+{h:"\ubc88\uc5ed \ud328\ub110",c:"<b>\ud30c\uc77c \u2192 \ubc88\uc5ed</b>(<kbd>Ctrl+Shift+T</kbd>). \ub300\uc0c1 \uc5b8\uc5b4 \ucd94\uac00."},
+{h:"\ubc88\uc5ed\ud558\uae30",c:"\ub9d0\ud48d\uc120\uc744 \uc120\ud0dd\ud558\uace0 \ud65c\uc131 \uc5b8\uc5b4\uc758 \ubc88\uc5ed\uc744 \uc785\ub825."},
+{h:"\uc5b8\uc5b4 \uc804\ud658",c:"\ud65c\uc131 \uc5b8\uc5b4\ub97c \ubcc0\uacbd\ud558\uc5ec \uce94\ubc84\uc2a4\uc5d0\uc11c \ubc88\uc5ed \ud655\uc778."},
+{h:"\ub0b4\ubcf4\ub0b4\uae30",c:"\uc5b8\uc5b4\ubcc4 \ud3f4\ub354 \ub610\ub294 \ud30c\uc77c\uba85 \uc5b8\uc5b4 \ucf54\ub4dc\ub85c \ub0b4\ubcf4\ub0b4\uae30."}
+]},
+{id:"guides",title:"\uac00\uc774\ub4dc \ubc0f \uc815\ub82c",intro:"\uac00\uc774\ub4dc, \uadf8\ub9ac\ub4dc, \uc815\ub82c \ub3c4\uad6c\ub85c \uc815\ud655\ud558\uac8c \ubc30\uce58\ud569\ub2c8\ub2e4.",items:[
+{h:"\uac00\uc774\ub4dc \ucd94\uac00",c:"\uc218\ud3c9: <kbd>Ctrl+Alt+H</kbd>. \uc218\uc9c1: <kbd>Ctrl+Alt+V</kbd>."},
+{h:"\uc2a4\ub0c5",c:"<b>\uac00\uc774\ub4dc \uc2a4\ub0c5</b> \ubc0f <b>\uadf8\ub9ac\ub4dc \uc2a4\ub0c5</b>(<kbd>Ctrl+Shift+G</kbd>)."},
+{h:"\uadf8\ub9ac\ub4dc",c:"<kbd>Ctrl+G</kbd>\ub85c \ud45c\uc2dc/\uc228\uae30\uae30. <b>\ud658\uacbd \uc124\uc815 \u2192 \uce94\ubc84\uc2a4</b>\uc5d0\uc11c \uc0ac\uc6a9\uc790 \uc815\uc758."},
+{h:"\uc815\ub82c \ubc0f \ubd84\ubc30",c:"<b>\ud3b8\uc9d1 \u2192 \uc815\ub82c</b> \ubc0f <b>\ud3b8\uc9d1 \u2192 \ubd84\ubc30</b>."},
+{h:"\uac00\uc774\ub4dc \uc7a0\uae08",c:"\uc2e4\uc218\ub85c \uc774\ub3d9\ud558\uc9c0 \uc54a\ub3c4\ub85d \uc7a0\uae08."}
+]},
+{id:"export",title:"\ub0b4\ubcf4\ub0b4\uae30",intro:"\ud398\uc774\uc9c0\ub97c \ub2e4\uc591\ud55c \ud615\uc2dd\uc73c\ub85c \ub0b4\ubcf4\ub0c5\ub2c8\ub2e4.",items:[
+{h:"\uc5f4\uae30",c:"<b>\ud30c\uc77c \u2192 \ub0b4\ubcf4\ub0b4\uae30</b>(<kbd>Ctrl+Shift+E</kbd>)."},
+{h:"DPI \ubc0f \ud488\uc9c8",c:"\ud574\uc0c1\ub3c4(DPI)\uc640 \ud488\uc9c8(1\u2013100%)."},
+{h:"\uc635\uc158",c:"\ud22c\uba85 \ubc30\uacbd, \uc624\ubc84\ub808\uc774\ub9cc, \ud328\ub110 \ud14c\ub450\ub9ac, \uba54\ud0c0\ub370\uc774\ud130."},
+{h:"\ubc94\uc704",c:"\ud604\uc7ac \ud398\uc774\uc9c0 \ub610\ub294 \uc804\uccb4. \ubcf4\uc774\ub294 \ub808\uc774\uc5b4 \ub610\ub294 \uc120\ud0dd\ub9cc."},
+{h:"\ubc88\uc5ed",c:"\uc5b8\uc5b4\ubcc4 \ud3f4\ub354 \ub610\ub294 \ud30c\uc77c\uba85 \ucf54\ub4dc\ub85c \ub0b4\ubcf4\ub0b4\uae30."},
+{h:"\ud30c\uc77c\uba85 \ud328\ud134",c:"<code>{document}-page-{page}</code> \ub4f1\uc758 \ud328\ud134 \uc0ac\uc6a9."}
+]},
+
+{id:"preferences",title:"\ud658\uacbd \uc124\uc815",intro:"Letterist\ub97c \uc6cc\ud06c\ud50c\ub85c\uc5d0 \ub9de\uac8c \uc0ac\uc6a9\uc790 \uc815\uc758\ud569\ub2c8\ub2e4.",items:[
+{h:"\uc5f4\uae30",c:"<b>\ud30c\uc77c \u2192 \ud658\uacbd \uc124\uc815</b>(<kbd>Ctrl+,</kbd>)."},
+{h:"\uc77c\ubc18",c:"\uc5b8\uc5b4, \ud398\uc774\uc9c0 \ud06c\uae30, DPI, \uc790\ub3d9 \uc800\uc7a5, \ucd5c\uadfc \ud30c\uc77c."},
+{h:"\ub2e8\uc704",c:"\ud53d\uc140, \uc778\uce58, \uc13c\ud2f0\ubbf8\ud130, \ubc00\ub9ac\ubbf8\ud130, \ud3ec\uc778\ud2b8, \ud30c\uc774\uce74. \ub208\uae08\uc790."},
+{h:"\uce94\ubc84\uc2a4",c:"\ubc30\uacbd\uc0c9, \uadf8\ub9ac\ub4dc, \ud578\ub4e4, \ud655\ub300/\ucd95\uc18c, \uc2a4\ud06c\ub864 \uc18d\ub3c4."},
+{h:"\ub0b4\ubcf4\ub0b4\uae30",c:"\uae30\ubcf8 \ud615\uc2dd, DPI, \ud488\uc9c8, \ud3f4\ub354, \ud30c\uc77c\uba85."},
+{h:"\uc131\ub2a5",c:"\uc2e4\ud589 \ucde8\uc18c \uc81c\ud55c, \uc378\ub124\uc77c \uce90\uc2dc, \ud558\ub4dc\uc6e8\uc5b4 \uac00\uc18d, \uba54\ubaa8\ub9ac."},
+{h:"\ub2e8\ucd95\ud0a4",c:"\ubaa8\ub4e0 \ub2e8\ucd95\ud0a4 \uc0ac\uc6a9\uc790 \uc815\uc758."},
+{h:"\uac00\uc838\uc624\uae30/\ub0b4\ubcf4\ub0b4\uae30",c:"\uc124\uc815 \uc800\uc7a5 \ub610\ub294 \ubcf5\uc6d0."}
+]}
+]
+}
+};
+renderHelp();
+</script>
+</body>
+</html>

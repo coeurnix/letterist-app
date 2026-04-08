@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Letterist Quickstart</title>
+<style>
+:root{--bg:#101722;--panel:#1a2538;--line:#375074;--text:#edf3ff;--muted:#c7d3e9;--accent:#84b8ff;--ok:#89deb5;--warn:#f4d35e;--step-bg:#1e3050}
+*{box-sizing:border-box}
+body{margin:0;padding:22px 22px 40px;background:radial-gradient(930px 420px at 100% -120px,#28406777 0%,#10172200 60%),var(--bg);color:var(--text);font:15px/1.6 "Segoe UI",Arial,sans-serif}
+main{max-width:860px;margin:0 auto}
+h1{margin:0 0 4px;font-size:2rem;font-weight:700}
+h2{margin:24px 0 8px;font-size:1.3rem;font-weight:600;color:#b8d4ff}
+h3{margin:16px 0 6px;font-size:1.05rem;font-weight:600;color:var(--accent)}
+p,li{color:var(--muted);line-height:1.65}
+.subtitle{color:#9ab3d8;font-size:1.05rem;margin:0 0 16px}
+.welcome{border-left:4px solid var(--ok);background:#89deb514;color:#def7ea;padding:12px 14px;border-radius:6px;margin:12px 0 20px;line-height:1.6}
+.panel{margin-top:16px;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.step{margin:12px 0;padding:12px 14px;border-radius:8px;background:var(--step-bg);border-left:3px solid var(--accent)}
+.step-num{display:inline-block;background:var(--accent);color:#0d1520;font-weight:700;font-size:0.85rem;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;margin-right:8px}
+.step-title{font-weight:600;color:var(--text)}
+.step p{margin:6px 0 0;font-size:0.93rem}
+.tip{margin:10px 0;padding:10px 12px;border-left:3px solid var(--warn);background:#f4d35e0c;border-radius:6px;font-size:0.93rem;color:#e8dbb0}
+.tip-label{font-weight:600;color:var(--warn)}
+kbd{display:inline-block;background:#263a58;border:1px solid #4a6a9a;border-radius:4px;padding:1px 6px;font-family:Consolas,"Courier New",monospace;font-size:0.88em;color:#d8e6ff}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.foot{margin-top:20px;padding-top:12px;border-top:1px solid var(--line);color:#8ea8cc;font-size:0.9rem}
+.next-link{display:inline-block;margin-top:8px;padding:8px 16px;background:#30466f;border:1px solid #4f73ac;border-radius:8px;color:#eef3ff;font-weight:500}
+.next-link:hover{filter:brightness(1.1);text-decoration:none}
+@media(max-width:700px){body{padding:14px 14px 30px}.step{padding:10px 12px}}
+</style>
+</head>
+<body>
+<main>
+<h1 id="title"></h1>
+<p class="subtitle" id="subtitle"></p>
+<div class="welcome" id="welcome"></div>
+
+<div class="panel" id="stepsPanel">
+<h2 id="stepsTitle"></h2>
+<div id="steps"></div>
+</div>
+
+<div class="panel" id="tipsPanel">
+<h2 id="tipsTitle"></h2>
+<div id="tips"></div>
+</div>
+
+<div class="panel">
+<p id="nextText" style="margin:0 0 8px"></p>
+<a class="next-link" id="contentsLink" href="../contents/index.html"></a>
+</div>
+
+<p class="foot" id="foot"></p>
+</main>
+
+<script>
+(function(){
+function normalizeLanguage(v){
+    if(!v)return "en";
+    const l=v.toLowerCase();
+    if(l.startsWith("zh")) return "zh-cn";
+    if(l.startsWith("pt")) return "pt-br";
+    if(l.startsWith("es")||l.startsWith("fr")||l.startsWith("de")||l.startsWith("ja")||l.startsWith("ko")) return l.split("-")[0];
+    return "en";
+}
+
+const D={
+"en":{
+    title:"Getting Started with Letterist",
+    subtitle:"A step-by-step guide to lettering your first comic page",
+    welcome:"Welcome! This guide will walk you through creating your first lettered comic page from start to finish. By the end, you'll know how to place balloons, style text, add tails, and export your work.",
+    stepsTitle:"Your First Lettered Page",
+    steps:[
+        {t:"Create a new document",d:"Go to <b>File \u2192 New Document</b> or press <kbd>Ctrl+N</kbd>. You can adjust the page size, DPI, and units in <b>File \u2192 Document Settings</b>. Common presets include US Comic, Manga B5, and A4."},
+        {t:"Load your artwork",d:"Add your comic artwork as a background image: go to <b>Objects \u2192 Open Image</b> or press <kbd>Ctrl+Shift+O</kbd>. The artwork will appear on your page as a reference to letter over. You can also drag and drop image files directly onto the canvas."},
+        {t:"Set up panels",d:"Press <kbd>P</kbd> to enter Panel Layout mode. Use the drawing tools (rectangle, rounded rectangle, ellipse) to draw your panel boundaries over the artwork. Press <kbd>P</kbd> again to return to normal editing. Panels help organize your balloons and define reading order."},
+        {t:"Create a speech balloon",d:"Press <kbd>B</kbd> or click the Balloon tool in the toolbar, then click on the canvas where you want the balloon. A new balloon appears ready for text. Double-click a balloon at any time to edit its text."},
+        {t:"Enter and style dialogue",d:"Type your dialogue into the balloon. Use the <b>Text</b> tab in the right panel to change the font (click the font name to open the font chooser), adjust size, color, and alignment. Select text and press <kbd>Ctrl+B</kbd> for bold, <kbd>Ctrl+I</kbd> for italic, or <kbd>Ctrl+U</kbd> for underline."},
+        {t:"Choose a balloon shape",d:"With a balloon selected, use the <b>Balloon</b> tab in the right panel to change its shape. Choose from Oval, Rounded Rectangle, Rectangle, Thought Bubble, Burst, Whisper, and more. Adjust the fill color and stroke as needed."},
+        {t:"Add a tail to point to the speaker",d:"Select a balloon and press <kbd>T</kbd> or click <b>Toggle Tail</b> in the toolbar. A tail appears \u2014 drag its tip to point toward the character who is speaking. You can adjust the tail width and curvature in the <b>Tail</b> tab."},
+        {t:"Arrange and refine",d:"Click and drag balloons to reposition them. Drag the corner handles to resize. Use <b>Edit \u2192 Align</b> and <b>Edit \u2192 Distribute</b> to line up multiple balloons neatly. If dialogue flows between balloons, select them and use <b>Objects \u2192 Link Balloons</b>."},
+        {t:"Add more pages",d:"Press <kbd>Ctrl+Alt+N</kbd> to add new pages. Use the <b>Pages</b> tab in the left panel to navigate between pages, reorder them, or duplicate an existing page. Each page can have its own background artwork."},
+        {t:"Export your finished work",d:"Go to <b>File \u2192 Export</b> or press <kbd>Ctrl+Shift+E</kbd>. Choose your format (PNG, JPEG, PDF, CBZ, EPUB, and more), set the DPI and quality, and click Export. You can export a single page or all pages at once."}
+    ],
+    tipsTitle:"Helpful Tips",
+    tips:[
+        {l:"Undo mistakes",d:"Press <kbd>Ctrl+Z</kbd> to undo and <kbd>Ctrl+Y</kbd> to redo. Almost every action can be undone, so feel free to experiment."},
+        {l:"Use styles for consistency",d:"Save your balloon and text settings as named styles to quickly apply them across your entire project. This keeps your lettering consistent throughout a chapter."},
+        {l:"Use templates for speed",d:"Save frequently used balloon configurations as templates. You can assign them to hotkeys (<kbd>Alt+1</kbd> through <kbd>Alt+9</kbd>) for instant placement."},
+        {l:"Find and replace text",d:"Press <kbd>Ctrl+F</kbd> to find text across all balloons, or <kbd>Ctrl+H</kbd> to find and replace \u2014 great for last-minute script changes."},
+    ],
+
+    nextText:"Ready to learn more? The complete help guide covers every feature in detail.",
+    contentsLink:"Open Complete Help Guide",
+    foot:"You can search both help pages using the search bar at the top of the help window."
+},
+"es":{
+    title:"Primeros pasos con Letterist",
+    subtitle:"Gu\u00eda paso a paso para rotular tu primera p\u00e1gina de c\u00f3mic",
+    welcome:"\u00a1Bienvenido! Esta gu\u00eda te acompa\u00f1ar\u00e1 en la creaci\u00f3n de tu primera p\u00e1gina de c\u00f3mic rotulada de principio a fin. Al terminar, sabr\u00e1s c\u00f3mo colocar globos, estilizar texto, a\u00f1adir colas y exportar tu trabajo.",
+    stepsTitle:"Tu primera p\u00e1gina rotulada",
+    steps:[
+        {t:"Crear un documento nuevo",d:"Ve a <b>Archivo \u2192 Nuevo documento</b> o pulsa <kbd>Ctrl+N</kbd>. Puedes ajustar el tama\u00f1o de p\u00e1gina, DPI y unidades en <b>Archivo \u2192 Configuraci\u00f3n del documento</b>. Los tama\u00f1os predefinidos incluyen US Comic, Manga B5 y A4."},
+        {t:"Cargar tu ilustraci\u00f3n",d:"A\u00f1ade tu ilustraci\u00f3n como imagen de fondo: ve a <b>Objetos \u2192 Abrir imagen</b> o pulsa <kbd>Ctrl+Shift+O</kbd>. La ilustraci\u00f3n aparecer\u00e1 como referencia para rotular encima. Tambi\u00e9n puedes arrastrar y soltar archivos de imagen directamente en el lienzo."},
+        {t:"Configurar paneles",d:"Pulsa <kbd>P</kbd> para entrar en el modo de paneles. Usa las herramientas de dibujo (rect\u00e1ngulo, rect\u00e1ngulo redondeado, elipse) para dibujar los bordes de tus paneles sobre la ilustraci\u00f3n. Pulsa <kbd>P</kbd> de nuevo para volver a la edici\u00f3n normal."},
+        {t:"Crear un globo de di\u00e1logo",d:"Pulsa <kbd>B</kbd> o haz clic en la herramienta Globo de la barra, luego haz clic en el lienzo donde quieras el globo. Aparece un nuevo globo listo para texto. Haz doble clic en cualquier momento para editar su texto."},
+        {t:"Introducir y estilizar di\u00e1logo",d:"Escribe tu di\u00e1logo en el globo. Usa la pesta\u00f1a <b>Texto</b> en el panel derecho para cambiar la fuente, tama\u00f1o, color y alineaci\u00f3n. Selecciona texto y pulsa <kbd>Ctrl+B</kbd> para negrita, <kbd>Ctrl+I</kbd> para cursiva, o <kbd>Ctrl+U</kbd> para subrayado."},
+        {t:"Elegir una forma de globo",d:"Con un globo seleccionado, usa la pesta\u00f1a <b>Globo</b> en el panel derecho para cambiar su forma: \u00d3valo, Rect\u00e1ngulo redondeado, Rect\u00e1ngulo, Burbuja de pensamiento, Explosi\u00f3n, Susurro y m\u00e1s."},
+        {t:"A\u00f1adir una cola hacia el hablante",d:"Selecciona un globo y pulsa <kbd>T</kbd> o haz clic en <b>Alternar cola</b> en la barra. Aparece una cola \u2014 arrastra su punta hacia el personaje que habla. Ajusta el ancho y curvatura en la pesta\u00f1a <b>Cola</b>."},
+        {t:"Organizar y refinar",d:"Arrastra los globos para reposicionarlos. Arrastra las esquinas para redimensionar. Usa <b>Editar \u2192 Alinear</b> y <b>Editar \u2192 Distribuir</b> para alinear varios globos. Si el di\u00e1logo fluye entre globos, usa <b>Objetos \u2192 Vincular globos</b>."},
+        {t:"A\u00f1adir m\u00e1s p\u00e1ginas",d:"Pulsa <kbd>Ctrl+Alt+N</kbd> para a\u00f1adir p\u00e1ginas. Usa la pesta\u00f1a <b>P\u00e1ginas</b> en el panel izquierdo para navegar, reordenar o duplicar p\u00e1ginas."},
+        {t:"Exportar tu trabajo terminado",d:"Ve a <b>Archivo \u2192 Exportar</b> o pulsa <kbd>Ctrl+Shift+E</kbd>. Elige el formato (PNG, JPEG, PDF, CBZ, EPUB y m\u00e1s), configura el DPI y la calidad, y haz clic en Exportar."}
+    ],
+    tipsTitle:"Consejos \u00fatiles",
+    tips:[
+        {l:"Deshacer errores",d:"Pulsa <kbd>Ctrl+Z</kbd> para deshacer y <kbd>Ctrl+Y</kbd> para rehacer. Casi toda acci\u00f3n se puede deshacer."},
+        {l:"Usa estilos para consistencia",d:"Guarda tus configuraciones de globo y texto como estilos nombrados para aplicarlos r\u00e1pidamente en todo el proyecto."},
+        {l:"Usa plantillas para velocidad",d:"Guarda configuraciones frecuentes de globo como plantillas y as\u00edgnalas a teclas r\u00e1pidas (<kbd>Alt+1</kbd> a <kbd>Alt+9</kbd>)."},
+        {l:"Buscar y reemplazar texto",d:"Pulsa <kbd>Ctrl+F</kbd> para buscar texto en todos los globos, o <kbd>Ctrl+H</kbd> para buscar y reemplazar."},
+    ],
+
+    nextText:"\u00bfQuieres aprender m\u00e1s? La gu\u00eda completa cubre cada funci\u00f3n en detalle.",
+    contentsLink:"Abrir gu\u00eda completa",
+    foot:"Puedes buscar en ambas p\u00e1ginas de ayuda usando la barra de b\u00fasqueda en la parte superior."
+},
+"fr":{
+    title:"D\u00e9buter avec Letterist",
+    subtitle:"Guide pas \u00e0 pas pour lettrer votre premi\u00e8re page de bande dessin\u00e9e",
+    welcome:"Bienvenue\u00a0! Ce guide vous accompagne dans la cr\u00e9ation de votre premi\u00e8re page lettr\u00e9e de A \u00e0 Z. Vous apprendrez \u00e0 placer des bulles, styliser le texte, ajouter des queues et exporter votre travail.",
+    stepsTitle:"Votre premi\u00e8re page lettr\u00e9e",
+    steps:[
+        {t:"Cr\u00e9er un nouveau document",d:"Allez dans <b>Fichier \u2192 Nouveau document</b> ou appuyez sur <kbd>Ctrl+N</kbd>. Vous pouvez r\u00e9gler la taille, le DPI et les unit\u00e9s dans <b>Fichier \u2192 Param\u00e8tres du document</b>. Les pr\u00e9r\u00e9glages courants incluent US Comic, Manga B5 et A4."},
+        {t:"Charger votre illustration",d:"Ajoutez votre illustration comme image de fond\u00a0: allez dans <b>Objets \u2192 Ouvrir image</b> ou appuyez sur <kbd>Ctrl+Shift+O</kbd>. Vous pouvez aussi glisser-d\u00e9poser des fichiers image sur le canevas."},
+        {t:"Configurer les cases",d:"Appuyez sur <kbd>P</kbd> pour entrer en mode cases. Utilisez les outils de dessin (rectangle, rectangle arrondi, ellipse) pour tracer vos cases. Appuyez sur <kbd>P</kbd> pour revenir \u00e0 l\u2019\u00e9dition normale."},
+        {t:"Cr\u00e9er une bulle de dialogue",d:"Appuyez sur <kbd>B</kbd> ou cliquez sur l\u2019outil Bulle dans la barre, puis cliquez sur le canevas. Double-cliquez sur une bulle pour modifier son texte."},
+        {t:"Saisir et styliser le dialogue",d:"Tapez votre dialogue. Utilisez l\u2019onglet <b>Texte</b> du panneau droit pour changer la police, la taille, la couleur et l\u2019alignement. <kbd>Ctrl+B</kbd> pour gras, <kbd>Ctrl+I</kbd> pour italique, <kbd>Ctrl+U</kbd> pour soulign\u00e9."},
+        {t:"Choisir une forme de bulle",d:"Avec une bulle s\u00e9lectionn\u00e9e, utilisez l\u2019onglet <b>Bulle</b> du panneau droit pour changer sa forme\u00a0: Ovale, Rectangle arrondi, Rectangle, Pens\u00e9e, Explosion, Chuchotement et plus."},
+        {t:"Ajouter une queue vers le locuteur",d:"S\u00e9lectionnez une bulle et appuyez sur <kbd>T</kbd>. Une queue appara\u00eet\u00a0\u2014 glissez sa pointe vers le personnage qui parle. R\u00e9glez la largeur et la courbure dans l\u2019onglet <b>Queue</b>."},
+        {t:"Organiser et peaufiner",d:"Glissez les bulles pour les repositionner. Utilisez <b>\u00c9dition \u2192 Aligner</b> et <b>\u00c9dition \u2192 Distribuer</b> pour aligner plusieurs bulles. Pour relier des bulles, utilisez <b>Objets \u2192 Lier les bulles</b>."},
+        {t:"Ajouter des pages",d:"Appuyez sur <kbd>Ctrl+Alt+N</kbd> pour ajouter des pages. Utilisez l\u2019onglet <b>Pages</b> du panneau gauche pour naviguer, r\u00e9ordonner ou dupliquer."},
+        {t:"Exporter votre travail",d:"Allez dans <b>Fichier \u2192 Exporter</b> ou appuyez sur <kbd>Ctrl+Shift+E</kbd>. Choisissez le format (PNG, JPEG, PDF, CBZ, EPUB\u2026), r\u00e9glez le DPI et la qualit\u00e9, puis cliquez sur Exporter."}
+    ],
+    tipsTitle:"Conseils pratiques",
+    tips:[
+        {l:"Annuler les erreurs",d:"<kbd>Ctrl+Z</kbd> pour annuler, <kbd>Ctrl+Y</kbd> pour r\u00e9tablir. Presque toute action est r\u00e9versible."},
+        {l:"Styles pour la coh\u00e9rence",d:"Enregistrez vos param\u00e8tres de bulle et texte comme styles nomm\u00e9s pour les r\u00e9utiliser rapidement."},
+        {l:"Mod\u00e8les pour la rapidit\u00e9",d:"Enregistrez des bulles fr\u00e9quentes comme mod\u00e8les et assignez-les aux raccourcis <kbd>Alt+1</kbd> \u00e0 <kbd>Alt+9</kbd>."},
+        {l:"Rechercher et remplacer",d:"<kbd>Ctrl+F</kbd> pour chercher dans toutes les bulles, <kbd>Ctrl+H</kbd> pour chercher et remplacer."},
+    ],
+
+    nextText:"Envie d\u2019en savoir plus\u00a0? Le guide complet couvre chaque fonctionnalit\u00e9 en d\u00e9tail.",
+    contentsLink:"Ouvrir le guide complet",
+    foot:"Utilisez la barre de recherche en haut de la fen\u00eatre d\u2019aide pour chercher dans les deux pages."
+},
+"pt-br":{
+    title:"Primeiros passos com o Letterist",
+    subtitle:"Guia passo a passo para letrar sua primeira p\u00e1gina de quadrinhos",
+    welcome:"Bem-vindo! Este guia vai te acompanhar na cria\u00e7\u00e3o da sua primeira p\u00e1gina letrada do in\u00edcio ao fim. Voc\u00ea aprender\u00e1 a colocar bal\u00f5es, estilizar texto, adicionar caudas e exportar seu trabalho.",
+    stepsTitle:"Sua primeira p\u00e1gina letrada",
+    steps:[
+        {t:"Criar um novo documento",d:"V\u00e1 em <b>Arquivo \u2192 Novo documento</b> ou pressione <kbd>Ctrl+N</kbd>. Ajuste o tamanho da p\u00e1gina, DPI e unidades em <b>Arquivo \u2192 Configura\u00e7\u00f5es do documento</b>. Tamanhos predefinidos incluem US Comic, Mang\u00e1 B5 e A4."},
+        {t:"Carregar sua arte",d:"Adicione sua arte como imagem de fundo: v\u00e1 em <b>Objetos \u2192 Abrir imagem</b> ou pressione <kbd>Ctrl+Shift+O</kbd>. Voc\u00ea tamb\u00e9m pode arrastar e soltar arquivos de imagem diretamente na tela."},
+        {t:"Configurar quadros",d:"Pressione <kbd>P</kbd> para entrar no modo de quadros. Use as ferramentas de desenho (ret\u00e2ngulo, ret\u00e2ngulo arredondado, elipse) para desenhar os limites dos seus quadros. Pressione <kbd>P</kbd> novamente para voltar \u00e0 edi\u00e7\u00e3o normal."},
+        {t:"Criar um bal\u00e3o de fala",d:"Pressione <kbd>B</kbd> ou clique na ferramenta Bal\u00e3o na barra, depois clique na tela onde deseja o bal\u00e3o. Clique duas vezes em um bal\u00e3o para editar seu texto."},
+        {t:"Digitar e estilizar di\u00e1logos",d:"Digite seu di\u00e1logo no bal\u00e3o. Use a aba <b>Texto</b> no painel direito para alterar a fonte, tamanho, cor e alinhamento. <kbd>Ctrl+B</kbd> para negrito, <kbd>Ctrl+I</kbd> para it\u00e1lico, <kbd>Ctrl+U</kbd> para sublinhado."},
+        {t:"Escolher uma forma de bal\u00e3o",d:"Com um bal\u00e3o selecionado, use a aba <b>Bal\u00e3o</b> no painel direito para alterar sua forma: Oval, Ret\u00e2ngulo arredondado, Ret\u00e2ngulo, Bolha de pensamento, Explos\u00e3o, Sussurro e mais."},
+        {t:"Adicionar uma cauda apontando para o falante",d:"Selecione um bal\u00e3o e pressione <kbd>T</kbd>. Uma cauda aparece \u2014 arraste sua ponta em dire\u00e7\u00e3o ao personagem que fala. Ajuste a largura e curvatura na aba <b>Cauda</b>."},
+        {t:"Organizar e refinar",d:"Arraste os bal\u00f5es para reposicion\u00e1-los. Use <b>Editar \u2192 Alinhar</b> e <b>Editar \u2192 Distribuir</b> para organizar v\u00e1rios bal\u00f5es. Para vincular bal\u00f5es, use <b>Objetos \u2192 Vincular bal\u00f5es</b>."},
+        {t:"Adicionar mais p\u00e1ginas",d:"Pressione <kbd>Ctrl+Alt+N</kbd> para adicionar p\u00e1ginas. Use a aba <b>P\u00e1ginas</b> no painel esquerdo para navegar, reordenar ou duplicar."},
+        {t:"Exportar seu trabalho finalizado",d:"V\u00e1 em <b>Arquivo \u2192 Exportar</b> ou pressione <kbd>Ctrl+Shift+E</kbd>. Escolha o formato (PNG, JPEG, PDF, CBZ, EPUB e mais), defina o DPI e a qualidade, e clique em Exportar."}
+    ],
+    tipsTitle:"Dicas \u00fateis",
+    tips:[
+        {l:"Desfazer erros",d:"Pressione <kbd>Ctrl+Z</kbd> para desfazer e <kbd>Ctrl+Y</kbd> para refazer. Quase toda a\u00e7\u00e3o pode ser desfeita."},
+        {l:"Estilos para consist\u00eancia",d:"Salve suas configura\u00e7\u00f5es de bal\u00e3o e texto como estilos nomeados para aplic\u00e1-los rapidamente em todo o projeto."},
+        {l:"Templates para velocidade",d:"Salve configura\u00e7\u00f5es frequentes como templates e atribua aos atalhos <kbd>Alt+1</kbd> a <kbd>Alt+9</kbd>."},
+        {l:"Buscar e substituir",d:"<kbd>Ctrl+F</kbd> para buscar em todos os bal\u00f5es, <kbd>Ctrl+H</kbd> para buscar e substituir."},
+    ],
+
+    nextText:"Quer saber mais? O guia completo cobre cada recurso em detalhes.",
+    contentsLink:"Abrir guia completo",
+    foot:"Use a barra de busca no topo da janela de ajuda para pesquisar em ambas as p\u00e1ginas."
+},
+"de":{
+    title:"Erste Schritte mit Letterist",
+    subtitle:"Schritt-f\u00fcr-Schritt-Anleitung f\u00fcr Ihre erste Comic-Seite",
+    welcome:"Willkommen! Diese Anleitung f\u00fchrt Sie durch die Erstellung Ihrer ersten geletterten Comic-Seite von Anfang bis Ende. Sie lernen, Sprechblasen zu platzieren, Text zu gestalten, Schw\u00e4nze hinzuzuf\u00fcgen und Ihre Arbeit zu exportieren.",
+    stepsTitle:"Ihre erste geletterte Seite",
+    steps:[
+        {t:"Neues Dokument erstellen",d:"Gehen Sie zu <b>Datei \u2192 Neues Dokument</b> oder dr\u00fccken Sie <kbd>Ctrl+N</kbd>. Passen Sie Seitengr\u00f6\u00dfe, DPI und Einheiten in <b>Datei \u2192 Dokumenteinstellungen</b> an. G\u00e4ngige Vorlagen sind US Comic, Manga B5 und A4."},
+        {t:"Artwork laden",d:"F\u00fcgen Sie Ihr Artwork als Hintergrundbild hinzu: <b>Objekte \u2192 Bild \u00f6ffnen</b> oder <kbd>Ctrl+Shift+O</kbd>. Sie k\u00f6nnen auch Bilddateien per Drag & Drop auf die Leinwand ziehen."},
+        {t:"Panels einrichten",d:"Dr\u00fccken Sie <kbd>P</kbd> f\u00fcr den Panel-Modus. Zeichnen Sie mit den Werkzeugen (Rechteck, abgerundetes Rechteck, Ellipse) Ihre Panelr\u00e4nder. Dr\u00fccken Sie <kbd>P</kbd> erneut, um zur normalen Bearbeitung zur\u00fcckzukehren."},
+        {t:"Sprechblase erstellen",d:"Dr\u00fccken Sie <kbd>B</kbd> oder klicken Sie auf das Blasen-Werkzeug, dann klicken Sie auf die Leinwand. Doppelklicken Sie auf eine Blase, um deren Text zu bearbeiten."},
+        {t:"Dialog eingeben und gestalten",d:"Geben Sie Ihren Dialog ein. Verwenden Sie den <b>Text</b>-Tab im rechten Panel f\u00fcr Schriftart, Gr\u00f6\u00dfe, Farbe und Ausrichtung. <kbd>Ctrl+B</kbd> f\u00fcr fett, <kbd>Ctrl+I</kbd> f\u00fcr kursiv, <kbd>Ctrl+U</kbd> f\u00fcr unterstrichen."},
+        {t:"Blasenform w\u00e4hlen",d:"W\u00e4hlen Sie im <b>Blase</b>-Tab die Form: Oval, Abgerundetes Rechteck, Rechteck, Denkblase, Ausruf, Fl\u00fcstern und mehr."},
+        {t:"Schwanz zum Sprecher hinzuf\u00fcgen",d:"W\u00e4hlen Sie eine Blase und dr\u00fccken Sie <kbd>T</kbd>. Ein Schwanz erscheint \u2014 ziehen Sie seine Spitze zum sprechenden Charakter. Breite und Kr\u00fcmmung im <b>Schwanz</b>-Tab anpassen."},
+        {t:"Anordnen und verfeinern",d:"Ziehen Sie Blasen zum Neupositionieren. Verwenden Sie <b>Bearbeiten \u2192 Ausrichten</b> und <b>Bearbeiten \u2192 Verteilen</b>. F\u00fcr verbundenen Dialog nutzen Sie <b>Objekte \u2192 Blasen verkn\u00fcpfen</b>."},
+        {t:"Weitere Seiten hinzuf\u00fcgen",d:"Dr\u00fccken Sie <kbd>Ctrl+Alt+N</kbd> f\u00fcr neue Seiten. Nutzen Sie den <b>Seiten</b>-Tab im linken Panel zum Navigieren, Neuordnen oder Duplizieren."},
+        {t:"Arbeit exportieren",d:"Gehen Sie zu <b>Datei \u2192 Exportieren</b> oder <kbd>Ctrl+Shift+E</kbd>. W\u00e4hlen Sie Format (PNG, JPEG, PDF, CBZ, EPUB u.\u00a0a.), stellen Sie DPI und Qualit\u00e4t ein und klicken Sie auf Exportieren."}
+    ],
+    tipsTitle:"Hilfreiche Tipps",
+    tips:[
+        {l:"Fehler r\u00fcckg\u00e4ngig machen",d:"<kbd>Ctrl+Z</kbd> zum R\u00fcckg\u00e4ngigmachen, <kbd>Ctrl+Y</kbd> zum Wiederholen. Fast jede Aktion ist umkehrbar."},
+        {l:"Stile f\u00fcr Konsistenz",d:"Speichern Sie Blasen- und Texteinstellungen als benannte Stile f\u00fcr schnelle Wiederverwendung im gesamten Projekt."},
+        {l:"Vorlagen f\u00fcr Geschwindigkeit",d:"Speichern Sie h\u00e4ufig genutzte Blasen als Vorlagen und weisen Sie Hotkeys <kbd>Alt+1</kbd> bis <kbd>Alt+9</kbd> zu."},
+        {l:"Suchen und Ersetzen",d:"<kbd>Ctrl+F</kbd> zum Suchen in allen Blasen, <kbd>Ctrl+H</kbd> zum Suchen und Ersetzen."},
+    ],
+
+    nextText:"M\u00f6chten Sie mehr erfahren? Das vollst\u00e4ndige Handbuch behandelt jede Funktion im Detail.",
+    contentsLink:"Vollst\u00e4ndiges Handbuch \u00f6ffnen",
+    foot:"Verwenden Sie die Suchleiste oben im Hilfefenster, um beide Seiten zu durchsuchen."
+},
+"zh-cn":{
+    title:"\u5f00\u59cb\u4f7f\u7528 Letterist",
+    subtitle:"\u4e00\u6b65\u6b65\u6559\u4f60\u5b8c\u6210\u7b2c\u4e00\u9875\u6f2b\u753b\u5b57\u6548",
+    welcome:"\u6b22\u8fce\uff01\u672c\u6307\u5357\u5c06\u5e26\u4f60\u4ece\u5934\u5230\u5c3e\u5b8c\u6210\u7b2c\u4e00\u9875\u6f2b\u753b\u5b57\u6548\u3002\u4f60\u5c06\u5b66\u4f1a\u653e\u7f6e\u6c14\u6ce1\u3001\u8bbe\u7f6e\u6587\u5b57\u6837\u5f0f\u3001\u6dfb\u52a0\u5c3e\u5df4\u5e76\u5bfc\u51fa\u4f5c\u54c1\u3002",
+    stepsTitle:"\u4f60\u7684\u7b2c\u4e00\u9875\u5b57\u6548",
+    steps:[
+        {t:"\u521b\u5efa\u65b0\u6587\u6863",d:"\u8fdb\u5165 <b>\u6587\u4ef6 \u2192 \u65b0\u5efa\u6587\u6863</b> \u6216\u6309 <kbd>Ctrl+N</kbd>\u3002\u5728 <b>\u6587\u4ef6 \u2192 \u6587\u6863\u8bbe\u7f6e</b> \u4e2d\u8c03\u6574\u9875\u9762\u5c3a\u5bf8\u3001DPI \u548c\u5355\u4f4d\u3002\u5e38\u7528\u9884\u8bbe\u5305\u62ec US Comic\u3001Manga B5 \u548c A4\u3002"},
+        {t:"\u52a0\u8f7d\u4f5c\u54c1\u56fe\u7a3f",d:"\u901a\u8fc7 <b>\u5bf9\u8c61 \u2192 \u6253\u5f00\u56fe\u50cf</b> \u6216 <kbd>Ctrl+Shift+O</kbd> \u6dfb\u52a0\u80cc\u666f\u56fe\u3002\u4f60\u4e5f\u53ef\u4ee5\u76f4\u63a5\u5c06\u56fe\u50cf\u6587\u4ef6\u62d6\u653e\u5230\u753b\u5e03\u4e0a\u3002"},
+        {t:"\u8bbe\u7f6e\u5206\u955c",d:"\u6309 <kbd>P</kbd> \u8fdb\u5165\u5206\u955c\u5e03\u5c40\u6a21\u5f0f\u3002\u4f7f\u7528\u7ed8\u56fe\u5de5\u5177\uff08\u77e9\u5f62\u3001\u5706\u89d2\u77e9\u5f62\u3001\u692d\u5706\uff09\u5728\u56fe\u7a3f\u4e0a\u7ed8\u5236\u5206\u955c\u8fb9\u754c\u3002\u518d\u6309 <kbd>P</kbd> \u8fd4\u56de\u666e\u901a\u7f16\u8f91\u6a21\u5f0f\u3002"},
+        {t:"\u521b\u5efa\u5bf9\u8bdd\u6c14\u6ce1",d:"\u6309 <kbd>B</kbd> \u6216\u70b9\u51fb\u5de5\u5177\u680f\u4e2d\u7684\u6c14\u6ce1\u5de5\u5177\uff0c\u7136\u540e\u70b9\u51fb\u753b\u5e03\u4e0a\u60f3\u8981\u653e\u7f6e\u6c14\u6ce1\u7684\u4f4d\u7f6e\u3002\u53cc\u51fb\u6c14\u6ce1\u53ef\u7f16\u8f91\u6587\u5b57\u3002"},
+        {t:"\u8f93\u5165\u5e76\u8bbe\u7f6e\u5bf9\u8bdd\u6837\u5f0f",d:"\u5728\u6c14\u6ce1\u4e2d\u8f93\u5165\u5bf9\u8bdd\u3002\u4f7f\u7528\u53f3\u4fa7\u9762\u677f\u7684 <b>\u6587\u5b57</b> \u9009\u9879\u5361\u66f4\u6539\u5b57\u4f53\u3001\u5927\u5c0f\u3001\u989c\u8272\u548c\u5bf9\u9f50\u65b9\u5f0f\u3002<kbd>Ctrl+B</kbd> \u52a0\u7c97\uff0c<kbd>Ctrl+I</kbd> \u659c\u4f53\uff0c<kbd>Ctrl+U</kbd> \u4e0b\u5212\u7ebf\u3002"},
+        {t:"\u9009\u62e9\u6c14\u6ce1\u5f62\u72b6",d:"\u9009\u4e2d\u6c14\u6ce1\u540e\uff0c\u4f7f\u7528\u53f3\u4fa7\u9762\u677f\u7684 <b>\u6c14\u6ce1</b> \u9009\u9879\u5361\u66f4\u6539\u5f62\u72b6\uff1a\u692d\u5706\u3001\u5706\u89d2\u77e9\u5f62\u3001\u77e9\u5f62\u3001\u601d\u8003\u6ce1\u6ce1\u3001\u7206\u70b8\u3001\u8033\u8bed\u7b49\u3002"},
+        {t:"\u6dfb\u52a0\u6307\u5411\u8bf4\u8bdd\u8005\u7684\u5c3e\u5df4",d:"\u9009\u62e9\u6c14\u6ce1\u5e76\u6309 <kbd>T</kbd>\u3002\u5c3e\u5df4\u51fa\u73b0\u540e\uff0c\u5c06\u5176\u5c16\u7aef\u62d6\u5411\u8bf4\u8bdd\u7684\u89d2\u8272\u3002\u5728 <b>\u5c3e\u5df4</b> \u9009\u9879\u5361\u4e2d\u8c03\u6574\u5bbd\u5ea6\u548c\u66f2\u7387\u3002"},
+        {t:"\u6392\u5217\u548c\u5fae\u8c03",d:"\u62d6\u52a8\u6c14\u6ce1\u91cd\u65b0\u5b9a\u4f4d\u3002\u4f7f\u7528 <b>\u7f16\u8f91 \u2192 \u5bf9\u9f50</b> \u548c <b>\u7f16\u8f91 \u2192 \u5206\u5e03</b> \u6574\u9f50\u591a\u4e2a\u6c14\u6ce1\u3002\u5bf9\u8bdd\u8de8\u6c14\u6ce1\u65f6\uff0c\u4f7f\u7528 <b>\u5bf9\u8c61 \u2192 \u94fe\u63a5\u6c14\u6ce1</b>\u3002"},
+        {t:"\u6dfb\u52a0\u66f4\u591a\u9875\u9762",d:"\u6309 <kbd>Ctrl+Alt+N</kbd> \u6dfb\u52a0\u65b0\u9875\u3002\u4f7f\u7528\u5de6\u4fa7\u9762\u677f\u7684 <b>\u9875\u9762</b> \u9009\u9879\u5361\u6d4f\u89c8\u3001\u91cd\u65b0\u6392\u5e8f\u6216\u590d\u5236\u9875\u9762\u3002"},
+        {t:"\u5bfc\u51fa\u5b8c\u6210\u7684\u4f5c\u54c1",d:"\u8fdb\u5165 <b>\u6587\u4ef6 \u2192 \u5bfc\u51fa</b> \u6216\u6309 <kbd>Ctrl+Shift+E</kbd>\u3002\u9009\u62e9\u683c\u5f0f\uff08PNG\u3001JPEG\u3001PDF\u3001CBZ\u3001EPUB \u7b49\uff09\uff0c\u8bbe\u7f6e DPI \u548c\u8d28\u91cf\uff0c\u7136\u540e\u70b9\u51fb\u5bfc\u51fa\u3002"}
+    ],
+    tipsTitle:"\u5b9e\u7528\u63d0\u793a",
+    tips:[
+        {l:"\u64a4\u9500\u9519\u8bef",d:"<kbd>Ctrl+Z</kbd> \u64a4\u9500\uff0c<kbd>Ctrl+Y</kbd> \u91cd\u505a\u3002\u51e0\u4e4e\u6240\u6709\u64cd\u4f5c\u90fd\u53ef\u4ee5\u64a4\u9500\u3002"},
+        {l:"\u4f7f\u7528\u6837\u5f0f\u4fdd\u6301\u4e00\u81f4\u6027",d:"\u5c06\u6c14\u6ce1\u548c\u6587\u5b57\u8bbe\u7f6e\u4fdd\u5b58\u4e3a\u547d\u540d\u6837\u5f0f\uff0c\u65b9\u4fbf\u5728\u6574\u4e2a\u9879\u76ee\u4e2d\u5feb\u901f\u5e94\u7528\u3002"},
+        {l:"\u4f7f\u7528\u6a21\u677f\u63d0\u9ad8\u6548\u7387",d:"\u5c06\u5e38\u7528\u6c14\u6ce1\u914d\u7f6e\u4fdd\u5b58\u4e3a\u6a21\u677f\uff0c\u5e76\u5206\u914d\u5230\u5feb\u6377\u952e <kbd>Alt+1</kbd> \u5230 <kbd>Alt+9</kbd>\u3002"},
+        {l:"\u67e5\u627e\u548c\u66ff\u6362",d:"<kbd>Ctrl+F</kbd> \u5728\u6240\u6709\u6c14\u6ce1\u4e2d\u67e5\u627e\uff0c<kbd>Ctrl+H</kbd> \u67e5\u627e\u5e76\u66ff\u6362\u3002"},
+    ],
+
+    nextText:"\u60f3\u4e86\u89e3\u66f4\u591a\uff1f\u5b8c\u6574\u5e2e\u52a9\u6307\u5357\u8be6\u7ec6\u4ecb\u7ecd\u4e86\u6bcf\u4e2a\u529f\u80fd\u3002",
+    contentsLink:"\u6253\u5f00\u5b8c\u6574\u5e2e\u52a9\u6307\u5357",
+    foot:"\u60a8\u53ef\u4ee5\u4f7f\u7528\u5e2e\u52a9\u7a97\u53e3\u9876\u90e8\u7684\u641c\u7d22\u680f\u641c\u7d22\u4e24\u4e2a\u5e2e\u52a9\u9875\u9762\u3002"
+},
+"ja":{
+    title:"Letterist \u3092\u59cb\u3081\u3088\u3046",
+    subtitle:"\u521d\u3081\u3066\u306e\u30b3\u30df\u30c3\u30af\u30da\u30fc\u30b8\u3092\u30ec\u30bf\u30ea\u30f3\u30b0\u3059\u308b\u30b9\u30c6\u30c3\u30d7\u30d0\u30a4\u30b9\u30c6\u30c3\u30d7\u30ac\u30a4\u30c9",
+    welcome:"\u3088\u3046\u3053\u305d\uff01\u3053\u306e\u30ac\u30a4\u30c9\u3067\u306f\u3001\u521d\u3081\u3066\u306e\u30ec\u30bf\u30ea\u30f3\u30b0\u6e08\u307f\u30b3\u30df\u30c3\u30af\u30da\u30fc\u30b8\u3092\u6700\u521d\u304b\u3089\u6700\u5f8c\u307e\u3067\u4f5c\u6210\u3057\u307e\u3059\u3002\u5439\u304d\u51fa\u3057\u306e\u914d\u7f6e\u3001\u30c6\u30ad\u30b9\u30c8\u306e\u30b9\u30bf\u30a4\u30eb\u8a2d\u5b9a\u3001\u5c3b\u5c3e\u306e\u8ffd\u52a0\u3001\u66f8\u304d\u51fa\u3057\u306e\u65b9\u6cd5\u3092\u5b66\u3073\u307e\u3059\u3002",
+    stepsTitle:"\u521d\u3081\u3066\u306e\u30ec\u30bf\u30ea\u30f3\u30b0\u30da\u30fc\u30b8",
+    steps:[
+        {t:"\u65b0\u898f\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u3092\u4f5c\u6210",d:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u65b0\u898f\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8</b> \u307e\u305f\u306f <kbd>Ctrl+N</kbd>\u3002<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u8a2d\u5b9a</b> \u3067\u30da\u30fc\u30b8\u30b5\u30a4\u30ba\u3001DPI\u3001\u5358\u4f4d\u3092\u8a2d\u5b9a\u3067\u304d\u307e\u3059\u3002US Comic\u3001Manga B5\u3001A4 \u306a\u3069\u306e\u30d7\u30ea\u30bb\u30c3\u30c8\u304c\u3042\u308a\u307e\u3059\u3002"},
+        {t:"\u30a2\u30fc\u30c8\u30ef\u30fc\u30af\u3092\u8aad\u307f\u8fbc\u307f",d:"<b>\u30aa\u30d6\u30b8\u30a7\u30af\u30c8 \u2192 \u753b\u50cf\u3092\u958b\u304f</b> \u307e\u305f\u306f <kbd>Ctrl+Shift+O</kbd> \u3067\u80cc\u666f\u753b\u50cf\u3092\u8ffd\u52a0\u3002\u753b\u50cf\u30d5\u30a1\u30a4\u30eb\u3092\u30ad\u30e3\u30f3\u30d0\u30b9\u306b\u30c9\u30e9\u30c3\u30b0\uff06\u30c9\u30ed\u30c3\u30d7\u3059\u308b\u3053\u3068\u3082\u3067\u304d\u307e\u3059\u3002"},
+        {t:"\u30d1\u30cd\u30eb\u3092\u8a2d\u5b9a",d:"<kbd>P</kbd> \u3067\u30d1\u30cd\u30eb\u30ec\u30a4\u30a2\u30a6\u30c8\u30e2\u30fc\u30c9\u306b\u5165\u308a\u307e\u3059\u3002\u63cf\u753b\u30c4\u30fc\u30eb\uff08\u77e9\u5f62\u3001\u89d2\u4e38\u77e9\u5f62\u3001\u6955\u5186\uff09\u3067\u30d1\u30cd\u30eb\u5883\u754c\u3092\u63cf\u304d\u307e\u3059\u3002<kbd>P</kbd> \u3067\u901a\u5e38\u7de8\u96c6\u306b\u623b\u308a\u307e\u3059\u3002"},
+        {t:"\u5439\u304d\u51fa\u3057\u3092\u4f5c\u6210",d:"<kbd>B</kbd> \u307e\u305f\u306f\u30c4\u30fc\u30eb\u30d0\u30fc\u306e\u5439\u304d\u51fa\u3057\u30c4\u30fc\u30eb\u3092\u30af\u30ea\u30c3\u30af\u3057\u3001\u30ad\u30e3\u30f3\u30d0\u30b9\u4e0a\u3092\u30af\u30ea\u30c3\u30af\u3002\u30c0\u30d6\u30eb\u30af\u30ea\u30c3\u30af\u3067\u30c6\u30ad\u30b9\u30c8\u3092\u7de8\u96c6\u3067\u304d\u307e\u3059\u3002"},
+        {t:"\u30bb\u30ea\u30d5\u3092\u5165\u529b\u30fb\u30b9\u30bf\u30a4\u30eb\u8a2d\u5b9a",d:"\u5439\u304d\u51fa\u3057\u306b\u30bb\u30ea\u30d5\u3092\u5165\u529b\u3002\u53f3\u30d1\u30cd\u30eb\u306e <b>\u30c6\u30ad\u30b9\u30c8</b> \u30bf\u30d6\u3067\u30d5\u30a9\u30f3\u30c8\u3001\u30b5\u30a4\u30ba\u3001\u8272\u3001\u914d\u7f6e\u3092\u5909\u66f4\u3002<kbd>Ctrl+B</kbd> \u592a\u5b57\u3001<kbd>Ctrl+I</kbd> \u659c\u4f53\u3001<kbd>Ctrl+U</kbd> \u4e0b\u7dda\u3002"},
+        {t:"\u5439\u304d\u51fa\u3057\u306e\u5f62\u72b6\u3092\u9078\u629e",d:"\u5439\u304d\u51fa\u3057\u3092\u9078\u629e\u3057\u3001\u53f3\u30d1\u30cd\u30eb\u306e <b>\u5439\u304d\u51fa\u3057</b> \u30bf\u30d6\u3067\u5f62\u72b6\u3092\u5909\u66f4\uff1a\u6955\u5186\u3001\u89d2\u4e38\u77e9\u5f62\u3001\u77e9\u5f62\u3001\u601d\u8003\u6ce1\u3001\u7206\u767a\u3001\u3055\u3055\u3084\u304d\u306a\u3069\u3002"},
+        {t:"\u8a71\u8005\u3092\u793a\u3059\u5c3b\u5c3e\u3092\u8ffd\u52a0",d:"\u5439\u304d\u51fa\u3057\u3092\u9078\u629e\u3057\u3066 <kbd>T</kbd>\u3002\u5c3b\u5c3e\u304c\u8868\u793a\u3055\u308c\u305f\u3089\u3001\u5148\u7aef\u3092\u8a71\u3057\u3066\u3044\u308b\u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u306b\u30c9\u30e9\u30c3\u30b0\u3002<b>\u5c3b\u5c3e</b> \u30bf\u30d6\u3067\u5e45\u3068\u66f2\u7387\u3092\u8abf\u6574\u3002"},
+        {t:"\u914d\u7f6e\u3068\u8abf\u6574",d:"\u5439\u304d\u51fa\u3057\u3092\u30c9\u30e9\u30c3\u30b0\u3057\u3066\u518d\u914d\u7f6e\u3002<b>\u7de8\u96c6 \u2192 \u6574\u5217</b> \u3068 <b>\u7de8\u96c6 \u2192 \u5206\u5e03</b> \u3067\u63c3\u3048\u307e\u3059\u3002\u30bb\u30ea\u30d5\u304c\u8907\u6570\u306e\u5439\u304d\u51fa\u3057\u306b\u307e\u305f\u304c\u308b\u5834\u5408\u306f <b>\u30aa\u30d6\u30b8\u30a7\u30af\u30c8 \u2192 \u5439\u304d\u51fa\u3057\u3092\u30ea\u30f3\u30af</b>\u3002"},
+        {t:"\u30da\u30fc\u30b8\u3092\u8ffd\u52a0",d:"<kbd>Ctrl+Alt+N</kbd> \u3067\u65b0\u898f\u30da\u30fc\u30b8\u3092\u8ffd\u52a0\u3002\u5de6\u30d1\u30cd\u30eb\u306e <b>\u30da\u30fc\u30b8</b> \u30bf\u30d6\u3067\u30da\u30fc\u30b8\u306e\u79fb\u52d5\u3001\u4e26\u3079\u66ff\u3048\u3001\u8907\u88fd\u304c\u3067\u304d\u307e\u3059\u3002"},
+        {t:"\u4f5c\u54c1\u3092\u66f8\u304d\u51fa\u3057",d:"<b>\u30d5\u30a1\u30a4\u30eb \u2192 \u66f8\u304d\u51fa\u3057</b> \u307e\u305f\u306f <kbd>Ctrl+Shift+E</kbd>\u3002\u5f62\u5f0f\uff08PNG\u3001JPEG\u3001PDF\u3001CBZ\u3001EPUB \u306a\u3069\uff09\u3001DPI\u3001\u54c1\u8cea\u3092\u8a2d\u5b9a\u3057\u3066\u66f8\u304d\u51fa\u3057\u3002"}
+    ],
+    tipsTitle:"\u4fbf\u5229\u306a\u30d2\u30f3\u30c8",
+    tips:[
+        {l:"\u64cd\u4f5c\u306e\u53d6\u308a\u6d88\u3057",d:"<kbd>Ctrl+Z</kbd> \u3067\u5143\u306b\u623b\u3059\u3001<kbd>Ctrl+Y</kbd> \u3067\u3084\u308a\u76f4\u3057\u3002\u307b\u307c\u3059\u3079\u3066\u306e\u64cd\u4f5c\u3092\u53d6\u308a\u6d88\u305b\u307e\u3059\u3002"},
+        {l:"\u30b9\u30bf\u30a4\u30eb\u3067\u7d71\u4e00\u611f",d:"\u5439\u304d\u51fa\u3057\u3068\u30c6\u30ad\u30b9\u30c8\u306e\u8a2d\u5b9a\u3092\u540d\u524d\u4ed8\u304d\u30b9\u30bf\u30a4\u30eb\u3068\u3057\u3066\u4fdd\u5b58\u3057\u3001\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u5168\u4f53\u3067\u7d20\u65e9\u304f\u9069\u7528\u3002"},
+        {l:"\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u3067\u6642\u77ed",d:"\u3088\u304f\u4f7f\u3046\u5439\u304d\u51fa\u3057\u3092\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u3068\u3057\u3066\u4fdd\u5b58\u3057\u3001<kbd>Alt+1</kbd>\uff5e<kbd>Alt+9</kbd> \u306e\u30db\u30c3\u30c8\u30ad\u30fc\u306b\u5272\u308a\u5f53\u3066\u3002"},
+        {l:"\u691c\u7d22\u3068\u7f6e\u63db",d:"<kbd>Ctrl+F</kbd> \u3067\u5168\u5439\u304d\u51fa\u3057\u3092\u691c\u7d22\u3001<kbd>Ctrl+H</kbd> \u3067\u691c\u7d22\u30fb\u7f6e\u63db\u3002"},
+    ],
+
+    nextText:"\u3082\u3063\u3068\u8a73\u3057\u304f\u77e5\u308a\u305f\u3044\u3067\u3059\u304b\uff1f\u5b8c\u5168\u30d8\u30eb\u30d7\u30ac\u30a4\u30c9\u3067\u5168\u6a5f\u80fd\u3092\u8a73\u7d30\u306b\u89e3\u8aac\u3057\u3066\u3044\u307e\u3059\u3002",
+    contentsLink:"\u5b8c\u5168\u30d8\u30eb\u30d7\u30ac\u30a4\u30c9\u3092\u958b\u304f",
+    foot:"\u30d8\u30eb\u30d7\u30a6\u30a3\u30f3\u30c9\u30a6\u4e0a\u90e8\u306e\u691c\u7d22\u30d0\u30fc\u3067\u4e21\u30da\u30fc\u30b8\u3092\u691c\u7d22\u3067\u304d\u307e\u3059\u3002"
+},
+"ko":{
+    title:"Letterist \uc2dc\uc791\ud558\uae30",
+    subtitle:"\uccab \ub9cc\ud654 \ud398\uc774\uc9c0 \ub808\ud130\ub9c1 \ub2e8\uacc4\ubcc4 \uac00\uc774\ub4dc",
+    welcome:"\ud658\uc601\ud569\ub2c8\ub2e4! \uc774 \uac00\uc774\ub4dc\ub97c \ub530\ub77c \ucc98\uc74c\ubd80\ud130 \ub05d\uae4c\uc9c0 \uccab \ub808\ud130\ub9c1 \ud398\uc774\uc9c0\ub97c \uc644\uc131\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub9d0\ud48d\uc120 \ubc30\uce58, \ud14d\uc2a4\ud2b8 \uc2a4\ud0c0\uc77c \uc124\uc815, \uaf2c\ub9ac \ucd94\uac00, \ub0b4\ubcf4\ub0b4\uae30 \ubc29\ubc95\uc744 \ubc30\uc6b0\uac8c \ub429\ub2c8\ub2e4.",
+    stepsTitle:"\uccab \ub808\ud130\ub9c1 \ud398\uc774\uc9c0",
+    steps:[
+        {t:"\uc0c8 \ubb38\uc11c \ub9cc\ub4e4\uae30",d:"<b>\ud30c\uc77c \u2192 \uc0c8 \ubb38\uc11c</b> \ub610\ub294 <kbd>Ctrl+N</kbd>\uc744 \ub204\ub985\ub2c8\ub2e4. <b>\ud30c\uc77c \u2192 \ubb38\uc11c \uc124\uc815</b>\uc5d0\uc11c \ud398\uc774\uc9c0 \ud06c\uae30, DPI, \ub2e8\uc704\ub97c \uc870\uc815\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. US Comic, Manga B5, A4 \ub4f1\uc758 \ud504\ub9ac\uc14b\uc774 \uc788\uc2b5\ub2c8\ub2e4."},
+        {t:"\uc544\ud2b8\uc6cc\ud06c \ubd88\ub7ec\uc624\uae30",d:"<b>\uac1d\uccb4 \u2192 \uc774\ubbf8\uc9c0 \uc5f4\uae30</b> \ub610\ub294 <kbd>Ctrl+Shift+O</kbd>\ub85c \ubc30\uacbd \uc774\ubbf8\uc9c0\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4. \uc774\ubbf8\uc9c0 \ud30c\uc77c\uc744 \uce94\ubc84\uc2a4\uc5d0 \ub4dc\ub798\uadf8 \uc564 \ub4dc\ub86d\ud560 \uc218\ub3c4 \uc788\uc2b5\ub2c8\ub2e4."},
+        {t:"\ud328\ub110 \uc124\uc815",d:"<kbd>P</kbd>\ub97c \ub20c\ub7ec \ud328\ub110 \ub808\uc774\uc544\uc6c3 \ubaa8\ub4dc\ub85c \uc804\ud658\ud569\ub2c8\ub2e4. \uadf8\ub9ac\uae30 \ub3c4\uad6c(\uc0ac\uac01\ud615, \ub465\uadfc \uc0ac\uac01\ud615, \ud0c0\uc6d0)\ub85c \ud328\ub110 \uacbd\uacc4\ub97c \uadf8\ub9bd\ub2c8\ub2e4. <kbd>P</kbd>\ub97c \ub2e4\uc2dc \ub20c\ub7ec \uc77c\ubc18 \ud3b8\uc9d1\uc73c\ub85c \ub3cc\uc544\uac11\ub2c8\ub2e4."},
+        {t:"\ub9d0\ud48d\uc120 \ub9cc\ub4e4\uae30",d:"<kbd>B</kbd> \ub610\ub294 \ud234\ubc14\uc758 \ub9d0\ud48d\uc120 \ub3c4\uad6c\ub97c \ud074\ub9ad\ud55c \ud6c4 \uce94\ubc84\uc2a4\ub97c \ud074\ub9ad\ud569\ub2c8\ub2e4. \ub9d0\ud48d\uc120\uc744 \ub354\ube14\ud074\ub9ad\ud558\uba74 \ud14d\uc2a4\ud2b8\ub97c \ud3b8\uc9d1\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."},
+        {t:"\ub300\uc0ac \uc785\ub825 \ubc0f \uc2a4\ud0c0\uc77c \uc124\uc815",d:"\ub9d0\ud48d\uc120\uc5d0 \ub300\uc0ac\ub97c \uc785\ub825\ud569\ub2c8\ub2e4. \uc624\ub978\ucabd \ud328\ub110\uc758 <b>\ud14d\uc2a4\ud2b8</b> \ud0ed\uc5d0\uc11c \uae00\uaf34, \ud06c\uae30, \uc0c9\uc0c1, \uc815\ub82c\uc744 \ubcc0\uacbd\ud569\ub2c8\ub2e4. <kbd>Ctrl+B</kbd> \uad75\uac8c, <kbd>Ctrl+I</kbd> \uae30\uc6b8\uc784, <kbd>Ctrl+U</kbd> \ubc11\uc904."},
+        {t:"\ub9d0\ud48d\uc120 \ubaa8\uc591 \uc120\ud0dd",d:"\ub9d0\ud48d\uc120\uc744 \uc120\ud0dd\ud55c \ud6c4 \uc624\ub978\ucabd \ud328\ub110\uc758 <b>\ub9d0\ud48d\uc120</b> \ud0ed\uc5d0\uc11c \ubaa8\uc591\uc744 \ubcc0\uacbd: \ud0c0\uc6d0, \ub465\uadfc \uc0ac\uac01\ud615, \uc0ac\uac01\ud615, \uc0dd\uac01 \ud48d\uc120, \ud3ed\ubc1c, \uc18d\uc0ad\uc784 \ub4f1."},
+        {t:"\ud654\uc790\ub97c \uac00\ub9ac\ud0a4\ub294 \uaf2c\ub9ac \ucd94\uac00",d:"\ub9d0\ud48d\uc120\uc744 \uc120\ud0dd\ud558\uace0 <kbd>T</kbd>\ub97c \ub204\ub985\ub2c8\ub2e4. \uaf2c\ub9ac\uac00 \ub098\ud0c0\ub098\uba74 \ub05d\uc744 \ub9d0\ud558\ub294 \uce90\ub9ad\ud130 \ucabd\uc73c\ub85c \ub4dc\ub798\uadf8\ud569\ub2c8\ub2e4. <b>\uaf2c\ub9ac</b> \ud0ed\uc5d0\uc11c \ub108\ube44\uc640 \uace1\ub960\uc744 \uc870\uc815\ud569\ub2c8\ub2e4."},
+        {t:"\ubc30\uce58 \ubc0f \ub2e4\ub4ec\uae30",d:"\ub9d0\ud48d\uc120\uc744 \ub4dc\ub798\uadf8\ud558\uc5ec \uc704\uce58\ub97c \ubcc0\uacbd\ud569\ub2c8\ub2e4. <b>\ud3b8\uc9d1 \u2192 \uc815\ub82c</b>\uacfc <b>\ud3b8\uc9d1 \u2192 \ubd84\ubc30</b>\ub85c \uc5ec\ub7ec \ub9d0\ud48d\uc120\uc744 \uc815\ub82c\ud569\ub2c8\ub2e4. \ub300\ud654\uac00 \uc5ec\ub7ec \ub9d0\ud48d\uc120\uc5d0 \uac78\uce58\uba74 <b>\uac1d\uccb4 \u2192 \ub9d0\ud48d\uc120 \uc5f0\uacb0</b>\uc744 \uc0ac\uc6a9\ud569\ub2c8\ub2e4."},
+        {t:"\ud398\uc774\uc9c0 \ucd94\uac00",d:"<kbd>Ctrl+Alt+N</kbd>\uc73c\ub85c \uc0c8 \ud398\uc774\uc9c0\ub97c \ucd94\uac00\ud569\ub2c8\ub2e4. \uc67c\ucabd \ud328\ub110\uc758 <b>\ud398\uc774\uc9c0</b> \ud0ed\uc5d0\uc11c \ud398\uc774\uc9c0 \uc774\ub3d9, \uc7ac\uc815\ub82c, \ubcf5\uc81c\uac00 \uac00\ub2a5\ud569\ub2c8\ub2e4."},
+        {t:"\uc644\uc131\ub41c \uc791\ud488 \ub0b4\ubcf4\ub0b4\uae30",d:"<b>\ud30c\uc77c \u2192 \ub0b4\ubcf4\ub0b4\uae30</b> \ub610\ub294 <kbd>Ctrl+Shift+E</kbd>. \ud615\uc2dd(PNG, JPEG, PDF, CBZ, EPUB \ub4f1)\uc744 \uc120\ud0dd\ud558\uace0 DPI\uc640 \ud488\uc9c8\uc744 \uc124\uc815\ud55c \ud6c4 \ub0b4\ubcf4\ub0b4\uae30\ub97c \ud074\ub9ad\ud569\ub2c8\ub2e4."}
+    ],
+    tipsTitle:"\uc720\uc6a9\ud55c \ud301",
+    tips:[
+        {l:"\uc2e4\uc218 \ub418\ub3cc\ub9ac\uae30",d:"<kbd>Ctrl+Z</kbd>\ub85c \uc2e4\ud589 \ucde8\uc18c, <kbd>Ctrl+Y</kbd>\ub85c \ub2e4\uc2dc \uc2e4\ud589. \uac70\uc758 \ubaa8\ub4e0 \uc791\uc5c5\uc744 \ucde8\uc18c\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."},
+        {l:"\uc2a4\ud0c0\uc77c\ub85c \uc77c\uad00\uc131 \uc720\uc9c0",d:"\ub9d0\ud48d\uc120\uacfc \ud14d\uc2a4\ud2b8 \uc124\uc815\uc744 \uc774\ub984 \uc788\ub294 \uc2a4\ud0c0\uc77c\ub85c \uc800\uc7a5\ud558\uc5ec \ud504\ub85c\uc81d\ud2b8 \uc804\uccb4\uc5d0\uc11c \ube60\ub974\uac8c \uc801\uc6a9\ud569\ub2c8\ub2e4."},
+        {l:"\ud15c\ud50c\ub9bf\uc73c\ub85c \uc18d\ub3c4 \ud5a5\uc0c1",d:"\uc790\uc8fc \uc0ac\uc6a9\ud558\ub294 \ub9d0\ud48d\uc120\uc744 \ud15c\ud50c\ub9bf\uc73c\ub85c \uc800\uc7a5\ud558\uace0 <kbd>Alt+1</kbd>~<kbd>Alt+9</kbd> \ub2e8\ucd95\ud0a4\ub97c \ud560\ub2f9\ud569\ub2c8\ub2e4."},
+        {l:"\ucc3e\uae30 \ubc0f \ubc14\uafb8\uae30",d:"<kbd>Ctrl+F</kbd>\ub85c \ubaa8\ub4e0 \ub9d0\ud48d\uc120 \uac80\uc0c9, <kbd>Ctrl+H</kbd>\ub85c \ucc3e\uae30 \ubc0f \ubc14\uafb8\uae30."},
+    ],
+
+    nextText:"\ub354 \uc790\uc138\ud788 \uc54c\uace0 \uc2f6\uc73c\uc2e0\uac00\uc694? \uc644\uc804\ud55c \ub3c4\uc6c0\ub9d0 \uac00\uc774\ub4dc\uc5d0\uc11c \ubaa8\ub4e0 \uae30\ub2a5\uc744 \uc0c1\uc138\ud788 \uc124\uba85\ud569\ub2c8\ub2e4.",
+    contentsLink:"\uc644\uc804\ud55c \ub3c4\uc6c0\ub9d0 \uac00\uc774\ub4dc \uc5f4\uae30",
+    foot:"\ub3c4\uc6c0\ub9d0 \ucc3d \uc0c1\ub2e8\uc758 \uac80\uc0c9\ubc14\ub85c \ub450 \ud398\uc774\uc9c0\ub97c \ubaa8\ub450 \uac80\uc0c9\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."
+}
+};
+
+const lang = normalizeLanguage(new URLSearchParams(location.search).get("lang"));
+const t = D[lang] || D.en;
+document.documentElement.lang = lang;
+document.title = t.title;
+
+function setText(id, val){ const e=document.getElementById(id); if(e) e.textContent=val; }
+function setHTML(id, val){ const e=document.getElementById(id); if(e) e.innerHTML=val; }
+
+setText("title", t.title);
+setText("subtitle", t.subtitle);
+setHTML("welcome", t.welcome);
+setText("stepsTitle", t.stepsTitle);
+setText("tipsTitle", t.tipsTitle);
+setText("nextText", t.nextText);
+setText("contentsLink", t.contentsLink);
+setText("foot", t.foot);
+document.getElementById("contentsLink").href = "../contents/index.html?lang=" + encodeURIComponent(lang);
+
+setHTML("steps", t.steps.map(function(s, i){
+    return '<div class="step"><span class="step-num">'+(i+1)+'</span><span class="step-title">'+s.t+'</span><p>'+s.d+'</p></div>';
+}).join(""));
+
+var tips = (t.tips || []).filter(function(tip){
+    var combined = ((tip && tip.l) || "") + " " + ((tip && tip.d) || "");
+    return !/ctrl\+k/i.test(combined);
+});
+setHTML("tips", tips.map(function(tip){
+    return '<div class="tip"><span class="tip-label">'+tip.l+'</span> &mdash; '+tip.d+'</div>';
+}).join(""));
+
+})();
+</script>
+</body>
+</html>
