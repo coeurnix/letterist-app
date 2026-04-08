@@ -4,9 +4,7 @@ Letterist is a Windows app for comic lettering. It is built for artists, lettere
 
 Download the latest release from [github.com/coeurnix/letterist-app/releases/latest](https://github.com/coeurnix/letterist-app/releases/latest).
 
-<video src="https://raw.githubusercontent.com/coeurnix/letterist-app/main/letterist-small.mp4" controls muted playsinline width="960"></video>
-
-[Open the demo video directly](https://raw.githubusercontent.com/coeurnix/letterist-app/main/letterist-small.mp4)
+<video src="https://github.com/user-attachments/assets/6561fa94-f125-460a-80fd-2aba0d1bfb17" controls muted playsinline width="960"></video>
 
 ## Who It's For
 
